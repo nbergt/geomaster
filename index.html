@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GeoMaster — Schweizer Geografie</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="rail">
+  <button class="wortmarke" id="nach-hause" type="button">
+    <span class="wortmarke-gm">GeoMaster</span>
+    <span class="wortmarke-sub">Blatt 1 : Schweiz</span>
+  </button>
+  <div class="rail-mitte" id="rail-mitte"></div>
+  <div class="rail-rechts">
+    <button class="knopf-schlicht" id="stoff-oeffnen" type="button">Stoff</button>
+  </div>
+</header>
+
+<!-- ── Startseite ──────────────────────────────────────────────────────── -->
+<main id="home" class="schirm">
+  <div class="home-kopf">
+    <h1>Was übst du heute?</h1>
+    <p class="lauftext">
+      Wähle ein Thema und eine Stufe. Die Skala zeigt, wie sicher der Stoff schon
+      sitzt — dreimal richtig hintereinander, und ein Eintrag gilt als gelernt.
+      Eine grüne Stufenzahl heisst: diese Stufe sitzt komplett.
+    </p>
+  </div>
+
+  <div class="set-wahl" id="set-wahl" role="group" aria-label="Karte wählen" hidden></div>
+
+  <ol class="themenliste" id="themenliste"></ol>
+
+  <div class="home-fuss">
+    <button class="knopf-schlicht" id="fortschritt-loeschen" type="button">Fortschritt zurücksetzen</button>
+    <p class="quellen">
+      Schweiz — Karten: swisstopo über geoBoundaries; Seen und Flüsse: © OpenStreetMap-Mitwirkende (ODbL)
+      und ZHB/switzerland-geojson; Wappen: Wikimedia Commons.<br>
+      Europa — Karten: Natural Earth; Flaggen: flag-icons (MIT); Daten: Wikidata (CC0).
+    </p>
+  </div>
+</main>
+
+<!-- ── Quiz ────────────────────────────────────────────────────────────── -->
+<main id="quiz" class="schirm" hidden>
+  <div class="blatt">
+    <div class="frageleiste">
+      <p class="frage" id="frage">—</p>
+      <div class="frage-beigabe" id="frage-beigabe"></div>
+    </div>
+
+    <div class="kartenfeld" id="kartenfeld">
+      <svg id="karte" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Karte der Schweiz"></svg>
+      <div class="zoom-knoepfe" id="zoom-knoepfe">
+        <button class="zoom-knopf" id="zoom-rein" type="button" aria-label="Vergrössern" title="Vergrössern">+</button>
+        <button class="zoom-knopf" id="zoom-raus" type="button" aria-label="Verkleinern" title="Verkleinern">−</button>
+        <button class="zoom-knopf" id="zoom-reset" type="button" aria-label="Ganze Karte zeigen" title="Ganze Karte zeigen">⤢</button>
+      </div>
+    </div>
+
+    <div class="antwortfeld" id="antwortfeld"></div>
+  </div>
+
+  <div class="rueckmeldung" id="rueckmeldung" hidden>
+    <p class="rueck-text" id="rueck-text"></p>
+    <button class="knopf" id="weiter" type="button">Weiter</button>
+  </div>
+</main>
+
+<!-- ── Ergebnis ────────────────────────────────────────────────────────── -->
+<main id="ergebnis" class="schirm" hidden>
+  <div class="ergebnis-kopf">
+    <p class="ergebnis-zahl" id="ergebnis-zahl">—</p>
+    <h1 id="ergebnis-titel">Runde fertig</h1>
+    <p class="lauftext" id="ergebnis-text"></p>
+  </div>
+  <ul class="protokoll" id="protokoll"></ul>
+  <div class="ergebnis-knoepfe">
+    <button class="knopf" id="nochmal" type="button">Nochmal</button>
+    <button class="knopf knopf-zweit" id="stufe-hoch" type="button" hidden>Nächste Stufe</button>
+    <button class="knopf-schlicht" id="zurueck" type="button">Zur Übersicht</button>
+  </div>
+</main>
+
+<!-- ── Stoff bearbeiten ────────────────────────────────────────────────── -->
+<dialog id="stoff">
+  <form method="dialog" class="stoff-form">
+    <h2>Lernstoff</h2>
+    <p class="lauftext">
+      Der Stoff steht als JSON hier drin. Ein neues Kapitel fügst du ein, indem du
+      den Text ersetzt und speicherst. Zurücksetzen stellt den Stoff der beiden
+      Arbeitsblätter wieder her.
+    </p>
+    <textarea id="stoff-text" spellcheck="false" aria-label="Lernstoff als JSON"></textarea>
+    <p class="stoff-meldung" id="stoff-meldung"></p>
+    <menu>
+      <button class="knopf-schlicht" value="abbruch" type="submit">Abbrechen</button>
+      <button class="knopf-schlicht" id="stoff-reset" type="button">Zurücksetzen</button>
+      <button class="knopf" id="stoff-speichern" type="button">Speichern</button>
+    </menu>
+  </form>
+</dialog>
+
+<script src="js/geo-ch.js"></script>
+<script src="js/data-ch.js"></script>
+<script src="js/wappen.js"></script>
+<script src="js/geo-eu.js"></script>
+<script src="js/data-eu.js"></script>
+<script src="js/flaggen-eu.js"></script>
+<script src="js/sets.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
