@@ -23,7 +23,7 @@
 ## Arbeitsablauf (für jeden Auftrag verbindlich)
 
 1. **Klären vor der Spezifikation:** Auftrag verstehen, offene Punkte mit dem Benutzer klären und die Sinnhaftigkeit hinterfragen (Nutzen, Alternativen, Konflikte mit diesen Projektregeln). Wenn nötig zuerst Varianten mit dem Benutzer durchdenken (Brainstorming). Keine Annahmen stillschweigend treffen.
-2. **Spezifikation:** Ziel, Umfang, Nicht-Ziele und Abnahmekriterien schriftlich festhalten und vom Benutzer bestätigen lassen.
+2. **Spezifikation als GitHub-Issue:** Ziel, Umfang, Nicht-Ziele und Abnahmekriterien immer als Issue in `nbergt/geomaster` ablegen und vom Benutzer bestätigen lassen. Änderungen an der Spezifikation im Issue nachführen. Der Pull Request verweist auf das Issue (`Closes #…`).
 3. **Plan:** Umsetzungsschritte mit betroffenen Dateien und den zugehörigen Prüfungen aufschreiben, bevor Code geändert wird.
 4. **TDD:** Zuerst einen fehlschlagenden Test bzw. eine fehlschlagende Prüfung schreiben (`tools/check.mjs`, `tools/browser/*`), dann umsetzen, bis die Prüfung grün ist. Bestehende Prüfungen nie abschwächen oder überspringen.
 5. **Review mit Agents in mehreren Runden:** Nach der Umsetzung unabhängige Review-Agents einsetzen, mindestens:
