@@ -7,7 +7,10 @@
 
 'use strict';
 
-const SPEICHER = 'geomaster-v1';
+// Ein Speicher pro Ort: die Hauptseite und jede PR-Vorschau (Unterordner
+// pr-N/, siehe .github/workflows/pages.yml) haben ihren eigenen.
+const VERSION = 'geomaster-v1';
+const SPEICHER = `${VERSION} ${self.registration.scope}`;
 const DATEIEN = [
   './',
   'index.html',
@@ -37,13 +40,19 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
-    .then(alle => Promise.all(alle.filter(k => k !== SPEICHER).map(k => caches.delete(k))))
+    // Nur alte Versionen dieses Orts löschen, nicht die Speicher anderer Orte.
+    .then(alle => Promise.all(alle
+      .filter(k => k === VERSION ||               // Speicher der ersten Fassung (ohne Ort)
+        (k !== SPEICHER && k.startsWith('geomaster-') && k.endsWith(' ' + self.registration.scope)))
+      .map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
 self.addEventListener('fetch', e => {
   const anfrage = e.request;
   if (anfrage.method !== 'GET' || new URL(anfrage.url).origin !== location.origin) return;
+  // PR-Vorschauen in Unterordnern gehören nicht zur Hauptseite.
+  if (/^pr-\d+\//.test(anfrage.url.slice(self.registration.scope.length))) return;
   e.respondWith(
     fetch(anfrage)
       .then(antwort => {
