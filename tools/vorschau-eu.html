@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<title>Vorschau geo-eu.js</title>
+<!-- Sichtprüfung der generierten Europa-Geometrie, ohne App-Logik.
+     Per Doppelklick öffnen; Schalter oben blenden Ebenen ein und aus. -->
+<style>
+  body { margin: 0; font: 13px system-ui, sans-serif; background: #ded5c0; }
+  header { padding: 6px 10px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  svg { display: block; width: 100%; height: auto; background: #dbe9ef; }
+  .umgebung { fill: #d9d4c8; stroke: #bdb6a6; stroke-width: .4; }
+  .land { fill: #faf7f0; stroke: #b09056; stroke-width: .5; }
+  .land:hover { fill: #f5d233; }
+  .see { fill: #a9cddf; stroke: #3f88ab; stroke-width: .3; }
+  .umriss { fill: none; stroke: #2a241c; stroke-width: .8; }
+  .gebirge { fill: #8b6a2c; fill-opacity: .18; stroke: #8b6a2c; stroke-width: .4; }
+  .fluss { fill: none; stroke: #3f88ab; stroke-width: .9; stroke-linecap: round; }
+  .klein { fill: #cf3a2c; stroke: #fff; stroke-width: .6; }
+  .anker { fill: #2a241c; }
+  text { font-size: 7px; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 1.6; }
+  text.wasser { fill: #3f88ab; font-style: italic; }
+  text.berg { fill: #8b6a2c; }
+  .aus { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <b>geo-eu.js</b>
+  <label><input type="checkbox" data-ebene="land-namen" checked> Ländernamen</label>
+  <label><input type="checkbox" data-ebene="gebirge" checked> Gebirge</label>
+  <label><input type="checkbox" data-ebene="fluesse" checked> Flüsse</label>
+  <label><input type="checkbox" data-ebene="fluss-namen" checked> Fluss-/Gebirgsnamen</label>
+  <span id="info"></span>
+</header>
+<svg id="k" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="../js/geo-eu.js"></script>
+<script>
+  const k = document.getElementById('k');
+  const ns = 'http://www.w3.org/2000/svg';
+  const neu = (tag, a, text) => {
+    const e = document.createElementNS(ns, tag);
+    for (const [n, v] of Object.entries(a)) e.setAttribute(n, v);
+    if (text) e.textContent = text;
+    return e;
+  };
+  const gruppe = name => { const g = neu('g', { id: name }); k.append(g); return g; };
+  k.setAttribute('viewBox', GEO_EU.viewBox);
+  gruppe('umgebung').append(neu('path', { class: 'umgebung', d: GEO_EU.umgebung }));
+  const gl = gruppe('laender');
+  for (const c of GEO_EU.countries) {
+    const p = neu('path', { class: 'land', d: c.d });
+    p.append(neu('title', {}, c.iso));
+    gl.append(p);
+  }
+  gruppe('umriss').append(neu('path', { class: 'umriss', d: GEO_EU.country }));
+  gruppe('seen').append(neu('path', { class: 'see', d: GEO_EU.seen }));
+  const gg = gruppe('gebirge');
+  for (const r of GEO_EU.ranges) gg.append(neu('path', { class: 'gebirge', d: r.d }));
+  const gf = gruppe('fluesse');
+  for (const r of GEO_EU.rivers) gf.append(neu('path', { class: 'fluss', d: r.d }));
+  const gk = gruppe('klein');
+  for (const s of GEO_EU.kleinstaaten) {
+    const [x, y] = GEO_EU.project(s.lon, s.lat);
+    gk.append(neu('circle', { class: 'klein', cx: x, cy: y, r: 2.2 }));
+  }
+  const gn = gruppe('land-namen');
+  for (const c of GEO_EU.countries) {
+    gn.append(neu('circle', { class: 'anker', cx: c.a[0], cy: c.a[1], r: .8 }));
+    gn.append(neu('text', { x: c.a[0], y: c.a[1] - 2 }, c.iso));
+  }
+  const gfn = gruppe('fluss-namen');
+  for (const r of GEO_EU.rivers) gfn.append(neu('text', { class: 'wasser', x: r.a[0], y: r.a[1] }, r.name));
+  for (const r of GEO_EU.ranges) gfn.append(neu('text', { class: 'berg', x: r.a[0], y: r.a[1] }, r.name));
+  for (const c of document.querySelectorAll('[data-ebene]')) {
+    c.addEventListener('change', () => document.getElementById(c.dataset.ebene).classList.toggle('aus', !c.checked));
+  }
+  document.getElementById('info').textContent =
+    `${GEO_EU.countries.length} Länder, ${GEO_EU.kleinstaaten.length} Kleinstaaten-Punkte, ` +
+    `${GEO_EU.rivers.length} Flüsse, ${GEO_EU.ranges.length} Gebirge, Breite ${GEO_EU.breiteKm} km`;
+</script>
+</body>
+</html>

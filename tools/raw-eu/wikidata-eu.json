@@ -1,0 +1,849 @@
+{
+ "quelle": "Wikidata (CC0)",
+ "abgerufen": "2026-10-26",
+ "hauptstaedte": [
+  {
+   "iso": "AD",
+   "land": "Q228",
+   "stadt": "Q1863",
+   "label": "Andorra la Vella",
+   "coord": [
+    1.522222222,
+    42.507222222
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "AL",
+   "land": "Q222",
+   "stadt": "Q19689",
+   "label": "Tirana",
+   "coord": [
+    19.818055555,
+    41.328333333
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "AT",
+   "land": "Q40",
+   "stadt": "Q1741",
+   "label": "Wien",
+   "coord": [
+    16.3725,
+    48.208333333
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "BA",
+   "land": "Q225",
+   "stadt": "Q11194",
+   "label": "Sarajevo",
+   "coord": [
+    18.413055555,
+    43.856388888
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "BE",
+   "land": "Q31",
+   "stadt": "Q239",
+   "label": "Brüssel",
+   "coord": [
+    4.351666666,
+    50.846666666
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "BG",
+   "land": "Q219",
+   "stadt": "Q472",
+   "label": "Sofia",
+   "coord": [
+    23.321726,
+    42.697886
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "BY",
+   "land": "Q184",
+   "stadt": "Q2280",
+   "label": "Minsk",
+   "coord": [
+    27.561837,
+    53.902246
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "CH",
+   "land": "Q39",
+   "stadt": "Q70",
+   "label": "Bern",
+   "coord": [
+    7.44743,
+    46.94798
+   ],
+   "rang": "preferred"
+  },
+  {
+   "iso": "CY",
+   "land": "Q229",
+   "stadt": "Q3856",
+   "label": "Nikosia",
+   "coord": [
+    33.365,
+    35.1725
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "CY",
+   "land": "Q644636",
+   "stadt": "Q3856",
+   "label": "Nikosia",
+   "coord": [
+    33.365,
+    35.1725
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "CZ",
+   "land": "Q213",
+   "stadt": "Q1085",
+   "label": "Prag",
+   "coord": [
+    14.421388888,
+    50.0875
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "DE",
+   "land": "Q183",
+   "stadt": "Q64",
+   "label": "Berlin",
+   "coord": [
+    13.383333333,
+    52.516666666
+   ],
+   "rang": "preferred"
+  },
+  {
+   "iso": "DK",
+   "land": "Q35",
+   "stadt": "Q1748",
+   "label": "Kopenhagen",
+   "coord": [
+    12.568888888,
+    55.676111111
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "EE",
+   "land": "Q191",
+   "stadt": "Q1770",
+   "label": "Tallinn",
+   "coord": [
+    24.745,
+    59.437222222
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "ES",
+   "land": "Q29",
+   "stadt": "Q2807",
+   "label": "Madrid",
+   "coord": [
+    -3.703333333,
+    40.416944444
+   ],
+   "rang": "preferred"
+  },
+  {
+   "iso": "FI",
+   "land": "Q33",
+   "stadt": "Q1757",
+   "label": "Helsinki",
+   "coord": [
+    24.9375,
+    60.170833333
+   ],
+   "rang": "preferred"
+  },
+  {
+   "iso": "FR",
+   "land": "Q142",
+   "stadt": "Q90",
+   "label": "Paris",
+   "coord": [
+    2.352222222,
+    48.856666666
+   ],
+   "rang": "preferred"
+  },
+  {
+   "iso": "GB",
+   "land": "Q145",
+   "stadt": "Q84",
+   "label": "London",
+   "coord": [
+    -0.1275,
+    51.507222222
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "GR",
+   "land": "Q41",
+   "stadt": "Q1524",
+   "label": "Athen",
+   "coord": [
+    23.728055555,
+    37.984166666
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "HR",
+   "land": "Q224",
+   "stadt": "Q1435",
+   "label": "Zagreb",
+   "coord": [
+    15.977222222,
+    45.813055555
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "HU",
+   "land": "Q28",
+   "stadt": "Q1781",
+   "label": "Budapest",
+   "coord": [
+    19.040833333,
+    47.498333333
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "IE",
+   "land": "Q27",
+   "stadt": "Q1761",
+   "label": "Dublin",
+   "coord": [
+    -6.260277777,
+    53.349722222
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "IS",
+   "land": "Q189",
+   "stadt": "Q1764",
+   "label": "Reykjavík",
+   "coord": [
+    -21.935,
+    64.1475
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "IT",
+   "land": "Q38",
+   "stadt": "Q220",
+   "label": "Rom",
+   "coord": [
+    12.482777777,
+    41.893055555
+   ],
+   "rang": "preferred"
+  },
+  {
+   "iso": "LI",
+   "land": "Q347",
+   "stadt": "Q1844",
+   "label": "Vaduz",
+   "coord": [
+    9.522222222,
+    47.140555555
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "LT",
+   "land": "Q37",
+   "stadt": "Q216",
+   "label": "Vilnius",
+   "coord": [
+    25.28,
+    54.687222222
+   ],
+   "rang": "preferred"
+  },
+  {
+   "iso": "LU",
+   "land": "Q32",
+   "stadt": "Q1842",
+   "label": "Luxemburg",
+   "coord": [
+    6.13,
+    49.611388888
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "LV",
+   "land": "Q211",
+   "stadt": "Q1773",
+   "label": "Riga",
+   "coord": [
+    24.106944444,
+    56.9475
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "MC",
+   "land": "Q235",
+   "stadt": "Q235",
+   "label": "Monaco",
+   "coord": [
+    7.42,
+    43.731111111
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "MD",
+   "land": "Q217",
+   "stadt": "Q21197",
+   "label": "Kischinau",
+   "coord": [
+    28.835277777,
+    47.022777777
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "ME",
+   "land": "Q236",
+   "stadt": "Q23564",
+   "label": "Podgorica",
+   "coord": [
+    19.262777777,
+    42.441388888
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "MK",
+   "land": "Q221",
+   "stadt": "Q384",
+   "label": "Skopje",
+   "coord": [
+    21.431666666,
+    41.996111111
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "MT",
+   "land": "Q233",
+   "stadt": "Q23800",
+   "label": "Valletta",
+   "coord": [
+    14.5125,
+    35.897777777
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "NL",
+   "land": "Q29999",
+   "stadt": "Q727",
+   "label": "Amsterdam",
+   "coord": [
+    4.883333333,
+    52.366666666
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "NO",
+   "land": "Q20",
+   "stadt": "Q585",
+   "label": "Oslo",
+   "coord": [
+    10.738888888,
+    59.913333333
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "PL",
+   "land": "Q36",
+   "stadt": "Q270",
+   "label": "Warschau",
+   "coord": [
+    21.011111111,
+    52.23
+   ],
+   "rang": "preferred"
+  },
+  {
+   "iso": "PT",
+   "land": "Q45",
+   "stadt": "Q597",
+   "label": "Lissabon",
+   "coord": [
+    -9.139016,
+    38.708042
+   ],
+   "rang": "preferred"
+  },
+  {
+   "iso": "RO",
+   "land": "Q218",
+   "stadt": "Q19660",
+   "label": "Bukarest",
+   "coord": [
+    26.097777777,
+    44.413361111
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "RS",
+   "land": "Q403",
+   "stadt": "Q3711",
+   "label": "Belgrad",
+   "coord": [
+    20.456944444,
+    44.817777777
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "RU",
+   "land": "Q159",
+   "stadt": "Q649",
+   "label": "Moskau",
+   "coord": [
+    37.6175,
+    55.750555555
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "SE",
+   "land": "Q34",
+   "stadt": "Q1754",
+   "label": "Stockholm",
+   "coord": [
+    18.068611111,
+    59.329444444
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "SI",
+   "land": "Q215",
+   "stadt": "Q437",
+   "label": "Ljubljana",
+   "coord": [
+    14.506111111,
+    46.051388888
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "SK",
+   "land": "Q214",
+   "stadt": "Q1780",
+   "label": "Bratislava",
+   "coord": [
+    17.1093063,
+    48.1516988
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "SM",
+   "land": "Q238",
+   "stadt": "Q1848",
+   "label": "San Marino",
+   "coord": [
+    12.44845,
+    43.932011111
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "TR",
+   "land": "Q43",
+   "stadt": "Q3640",
+   "label": "Ankara",
+   "coord": [
+    32.83869,
+    39.93576
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "UA",
+   "land": "Q212",
+   "stadt": "Q1899",
+   "label": "Kiew",
+   "coord": [
+    30.523611111,
+    50.45
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "VA",
+   "land": "Q237",
+   "stadt": "Q237",
+   "label": "Vatikanstadt",
+   "coord": [
+    12.453,
+    41.904
+   ],
+   "rang": "normal"
+  },
+  {
+   "iso": "XK",
+   "land": "Q1246",
+   "stadt": "Q25270",
+   "label": "Pristina",
+   "coord": [
+    21.166666666,
+    42.666666666
+   ],
+   "rang": "normal"
+  }
+ ],
+ "gipfel": [
+  {
+   "name": "Elbrus",
+   "wikidata": "Q43105",
+   "label": "Elbrus",
+   "typ": [
+    "Q8502"
+   ],
+   "koord": [
+    {
+     "lon": 42.437875,
+     "lat": 43.35254,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 5642,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": null
+    }
+   ]
+  },
+  {
+   "name": "Mont Blanc",
+   "wikidata": "Q583",
+   "label": "Mont Blanc",
+   "typ": [
+    "Q8502",
+    "Q111177881",
+    "Q3393392",
+    "Q1570358",
+    "Q3116906",
+    "Q22009162",
+    "Q1740763"
+   ],
+   "koord": [
+    {
+     "lon": 6.865,
+     "lat": 45.83277777777778,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 4807.02,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": "+1894-00-00T00:00:00Z"
+    },
+    {
+     "wert": 4810.02,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": "+2013-00-00T00:00:00Z"
+    },
+    {
+     "wert": 4808.72,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": "+2017-00-00T00:00:00Z"
+    },
+    {
+     "wert": 4808.06,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": "+2017-06-00T00:00:00Z"
+    },
+    {
+     "wert": 4807.81,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": "+2021-00-00T00:00:00Z"
+    },
+    {
+     "wert": 4805.59,
+     "einheit": "Q11573",
+     "rang": "preferred",
+     "zeitpunkt": "+2023-10-05T00:00:00Z"
+    }
+   ]
+  },
+  {
+   "name": "Zugspitze",
+   "wikidata": "Q3375",
+   "label": "Zugspitze",
+   "typ": [
+    "Q8502",
+    "Q3393392"
+   ],
+   "koord": [
+    {
+     "lon": 10.986314,
+     "lat": 47.421217,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 2962.06,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": null
+    }
+   ]
+  },
+  {
+   "name": "Grossglockner",
+   "wikidata": "Q3388",
+   "label": "Großglockner",
+   "typ": [
+    "Q8502",
+    "Q3393392"
+   ],
+   "koord": [
+    {
+     "lon": 12.69385,
+     "lat": 47.074528,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 3798,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": null
+    }
+   ]
+  },
+  {
+   "name": "Ätna",
+   "wikidata": "Q16990",
+   "label": "Ätna",
+   "typ": [
+    "Q169358",
+    "Q107539372"
+   ],
+   "koord": [
+    {
+     "lon": 14.993220288812111,
+     "lat": 37.7508345148182,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 3357,
+     "einheit": "Q11573",
+     "rang": "preferred",
+     "zeitpunkt": "+2021-00-00T00:00:00Z"
+    },
+    {
+     "wert": 3345,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": "+1978-00-00T00:00:00Z"
+    },
+    {
+     "wert": 3290,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": "+1956-00-00T00:00:00Z"
+    },
+    {
+     "wert": 3274,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": "+1900-00-00T00:00:00Z"
+    },
+    {
+     "wert": 3403,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": null
+    }
+   ]
+  },
+  {
+   "name": "Vesuv",
+   "wikidata": "Q524",
+   "label": "Vesuv",
+   "typ": [
+    "Q1330974",
+    "Q169358",
+    "Q8502"
+   ],
+   "koord": [
+    {
+     "lon": 14.42919,
+     "lat": 40.82261,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 1281,
+     "einheit": "Q11573",
+     "rang": "preferred",
+     "zeitpunkt": null
+    },
+    {
+     "wert": 1297,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": null
+    }
+   ]
+  },
+  {
+   "name": "Olymp",
+   "wikidata": "Q80344",
+   "label": "Berg Olymp",
+   "typ": [
+    "Q8502",
+    "Q46169",
+    "Q158454",
+    "Q15069452"
+   ],
+   "koord": [
+    {
+     "lon": 22.35,
+     "lat": 40.083333333333336,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 2917.727,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": null
+    }
+   ]
+  },
+  {
+   "name": "Mulhacén",
+   "wikidata": "Q209528",
+   "label": "Mulhacén",
+   "typ": [
+    "Q8502",
+    "Q111177881",
+    "Q1258187"
+   ],
+   "koord": [
+    {
+     "lon": -3.3113888888889,
+     "lat": 37.053333333333,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 3479,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": null
+    }
+   ]
+  },
+  {
+   "name": "Triglav",
+   "wikidata": "Q1024",
+   "label": "Triglav",
+   "typ": [
+    "Q8502",
+    "Q3393392"
+   ],
+   "koord": [
+    {
+     "lon": 13.836667,
+     "lat": 46.378333,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 2864,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": null
+    }
+   ]
+  },
+  {
+   "name": "Ben Nevis",
+   "wikidata": "Q104674",
+   "label": "Ben Nevis",
+   "typ": [
+    "Q8502"
+   ],
+   "koord": [
+    {
+     "lon": -5.003675,
+     "lat": 56.796891,
+     "rang": "normal"
+    }
+   ],
+   "hoehen": [
+    {
+     "wert": 1344.527,
+     "einheit": "Q11573",
+     "rang": "preferred",
+     "zeitpunkt": "+2016-00-00T00:00:00Z"
+    },
+    {
+     "wert": 1344.53,
+     "einheit": "Q11573",
+     "rang": "normal",
+     "zeitpunkt": null
+    }
+   ]
+  }
+ ]
+}

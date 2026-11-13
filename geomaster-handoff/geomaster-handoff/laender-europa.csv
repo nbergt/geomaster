@@ -1,0 +1,48 @@
+﻿iso;name;alias;hauptstadt;hauptstadt_alias;kfz;ne_adm0_a3;kleinstaat;status;bemerkung
+AL;Albanien;;Tirana;Tiranë;AL;ALB;nein;fix;
+AD;Andorra;;Andorra la Vella;;AND;AND;ja;fix;
+BE;Belgien;;Brüssel;Bruxelles|Brussel;B;BEL;nein;fix;
+BA;Bosnien und Herzegowina;Bosnien-Herzegowina|Bosnien;Sarajevo;;BIH;BIH;nein;fix;
+BG;Bulgarien;;Sofia;;BG;BGR;nein;fix;
+DK;Dänemark;;Kopenhagen;København;DK;DNK;nein;fix;Färöer (FRO) als eigenes NE-Feature: grau, nicht abfragen
+DE;Deutschland;;Berlin;;D;DEU;nein;fix;
+EE;Estland;;Tallinn;Reval;EST;EST;nein;fix;Reval = alter deutscher Name, nur Alias
+FI;Finnland;;Helsinki;Helsingfors;FIN;FIN;nein;fix;Åland (ALD) als eigenes NE-Feature: zu Finnland zählen oder grau
+FR;Frankreich;;Paris;;F;FRA;nein;fix;"NE ISO_A2=-99, ISO_A2_EH=FR; Überseegebiete clippen"
+GR;Griechenland;;Athen;Athína;GR;GRC;nein;fix;
+GB;Grossbritannien;Vereinigtes Königreich|England|UK;London;;UK;GBR;nein;fix;"Schreibweise bitte bestätigen (traditionell Grossbritannien, offiziell Vereinigtes Königreich); Kfz bis 2021 GB; Flagge flag-icons gb"
+IE;Irland;;Dublin;;IRL;IRL;nein;fix;
+IS;Island;;Reykjavik;Reykjavík;IS;ISL;nein;fix;
+IT;Italien;;Rom;Roma;I;ITA;nein;fix;Polygon mit Löchern für VA und SM
+XK;Kosovo;;Pristina;Priština|Prishtina;RKS;KOS;nein;fix;"XK ist kein offizieller ISO-Code (benutzerdefiniert, allgemein verwendet); NE ISO_A2=-99"
+HR;Kroatien;;Zagreb;Agram;HR;HRV;nein;fix;Agram = alter deutscher Name, nur Alias
+LV;Lettland;;Riga;;LV;LVA;nein;fix;
+LI;Liechtenstein;;Vaduz;;FL;LIE;ja;fix;
+LT;Litauen;;Vilnius;Wilna;LT;LTU;nein;fix;Wilna = alter deutscher Name, nur Alias
+LU;Luxemburg;;Luxemburg;Luxembourg;L;LUX;ja;fix;Fläche + Punkt
+MT;Malta;;Valletta;;M;MLT;ja;fix;
+MD;Moldawien;Moldau|Republik Moldau|Moldova;Chisinau;Chişinău|Chișinău|Kischinau|Kischinjow;MD;MDA;nein;fix;Hauptstadt-Hauptform bitte wählen: Chisinau (heute üblich) oder Kischinau (traditionell, selten)
+MC;Monaco;;Monaco;;MC;MCO;ja;fix;
+ME;Montenegro;;Podgorica;;MNE;MNE;nein;fix;
+NL;Niederlande;Holland;Amsterdam;;NL;NLD;nein;fix;Regierungssitz Den Haag: als Hinweis anzeigen, nicht als richtige Antwort
+MK;Nordmazedonien;Mazedonien;Skopje;Skopie;NMK;MKD;nein;fix;"Hauptform bitte bestätigen (traditionell Mazedonien, seit 2019 Nordmazedonien); Kfz seit 2019 NMK"
+NO;Norwegen;;Oslo;;N;NOR;nein;fix;"NE ISO_A2=-99, ISO_A2_EH=NO; Svalbard clippen"
+AT;Österreich;;Wien;;A;AUT;nein;fix;
+PL;Polen;;Warschau;Warszawa;PL;POL;nein;fix;
+PT;Portugal;;Lissabon;Lisboa;P;PRT;nein;fix;Azoren/Madeira: im Ausschnitt? (Azoren liegen weit westlich)
+RO;Rumänien;;Bukarest;București;RO;ROU;nein;fix;
+RU;Russland;;Moskau;Moskwa;RUS;RUS;nein;fix;"Karte bis ca. 60° O (Ural) clippen; Kaliningrad gehört dazu"
+SM;San Marino;;San Marino;;RSM;SMR;ja;fix;
+SE;Schweden;;Stockholm;;S;SWE;nein;fix;
+CH;Schweiz;;Bern;;CH;CHE;nein;fix;"Bern ist Bundesstadt; als Hinweis anzeigen"
+RS;Serbien;;Belgrad;Beograd;SRB;SRB;nein;fix;
+SK;Slowakei;;Bratislava;Pressburg;SK;SVK;nein;fix;Pressburg = alter deutscher Name, nur Alias
+SI;Slowenien;;Ljubljana;Laibach;SLO;SVN;nein;fix;Laibach = alter deutscher Name, nur Alias
+ES;Spanien;;Madrid;;E;ESP;nein;fix;Kanaren clippen
+CZ;Tschechien;Tschechische Republik;Prag;Praha;CZ;CZE;nein;fix;
+TR;Türkei;Türkiye;Ankara;;TR;TUR;nein;fix;"NE CONTINENT=Asia; ganze Türkei zeigen"
+UA;Ukraine;;Kiew;Kyjiw|Kyiv;UA;UKR;nein;fix;Krim gehört zu UA (NE _deu-Datei)
+HU;Ungarn;;Budapest;;H;HUN;nein;fix;
+VA;Vatikanstadt;Vatikan;Vatikanstadt;Vatikan;V;VAT;ja;fix;Land = Hauptstadt
+BY;Weissrussland;Belarus;Minsk;;BY;BLR;nein;fix;
+CY;Zypern;;Nikosia;Lefkosia;CY;CYP;nein;fix;"NE CONTINENT=Asia; in _deu-Datei ganze Insel"

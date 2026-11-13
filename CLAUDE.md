@@ -1,0 +1,20 @@
+# GeoMaster: Projektregeln für Claude Code
+
+- Massgeblich ist der aktuelle Auftrag des Benutzers. Die Europa-Erweiterung vom 26.10.2026 ist abgeschlossen; `geomaster-handoff/geomaster-handoff/AUFTRAG-EUROPA.md` und `ABSCHLUSSBERICHT.md` dokumentieren die damalige Umsetzung. Alte Phasenfreigaben sind kein neuer Auftrag.
+- Dieses Repository ist seit 13.11.2026 die vollständige Entwicklungsgrundlage. Arbeite in einem Branch und liefere Änderungen als Pull Request gegen `main`, sofern der Benutzer nichts anderes beauftragt. Die Live-App liegt unter https://nbergt.github.io/geomaster/.
+- Einrichtung und Übergabe: `ENTWICKLUNG.md` lesen. Node.js ab Version 22 verwenden; für Generatoren zuerst `npm ci --prefix tools`. Die reine App braucht keine Installation.
+- `tools/veroeffentlichen.mjs` ist ein historisches Skript für die frühere lokale Spiegelung nach `C:/Apps/GeoMaster-web`. Im GitHub-Workflow nicht ausführen. Änderungen werden über dieses Repository und die bestehende GitHub-Pages-Bereitstellung veröffentlicht.
+- Die App ist Vanilla HTML/CSS/JS, gestartet per Doppelklick (`file://`). Klassische `<script>`-Tags mit Globals, **keine** ES-Module, Frameworks, Bundler oder TypeScript im Browser.
+- Zur Laufzeit gibt es keine Netzwerkzugriffe (kein CDN, keine Webfonts). Netzwerk ist nur in `tools/*` beim Bauen erlaubt, mit devDependencies in `tools/package.json`.
+- Der Schweizer Modus ist tabu, er wird nur über die Set-Abstraktion eingebunden:
+  - `js/geo-ch.js`, `js/data-ch.js`, `js/wappen.js`, `tools/build-geo.mjs`, `tools/fetch-wappen.mjs` und `tools/raw/` nicht ändern.
+  - Die `localStorage`-Schlüssel `geomaster.fortschritt.v1` und `geomaster.stoff.v1` und das Format `thema|stufe|key` bleiben unverändert.
+  - Die CH-Toleranzen (15/8/5/0 km) bleiben.
+- Das Europa-Set bekommt eigene Speicher-Schlüssel (`geomaster.eu.*`).
+- Georgien, Armenien, Aserbaidschan und Kasachstan sind ausgeschlossen: nur graue Umgebung auf der Karte, nicht klickbar, nicht im Stoff.
+- Sprache der Oberfläche und Daten ist Deutsch (Schweiz): kein «ß», traditionelle deutsche Ländernamen, offizielle bzw. moderne Formen als Alias.
+- Keine Daten erfinden. Quellen sind nur `laender-europa.csv`, Natural Earth (`_deu`-Variante), Wikidata und flag-icons. Unsicheres im Bericht melden.
+- Vor jedem Abschluss `node tools/check.mjs --ch --eu` ausführen (CH-Regression gegen `tools/baseline-ch.json`, Europa-Daten) und die Ergebnisse berichten. Bei Änderungen an der Oberfläche zusätzlich `node tools/browser/gesten.mjs` und `node tools/browser/europa.mjs` ausführen. Chrome über die Umgebungsvariable `CHROME` angeben, wenn es nicht am Windows-Standardpfad liegt. Für den CH-Browser-Vergleich einen unveränderten Basis-Checkout verwenden: `node tools/browser/vergleich.mjs <Basis-Checkout> <Arbeits-Checkout> tools/browser/szenario-quiz.mjs` (Schweiz muss «identisch» bleiben). Nicht ausgeführte Prüfungen samt Grund offen nennen.
+- Europa-Stoff wird in `tools/laender-europa.csv` und `tools/stoff-eu.mjs` gepflegt; `js/data-eu.js`, `js/geo-eu.js` und `js/flaggen-eu.js` sind generiert (Befehle im README).
+- Generierte Dateien tragen den Kopf «AUTOGENERIERT … nicht von Hand ändern». Generatoren schreiben bei Fehlern **nichts**.
+- Kommentare und Bezeichner im bestehenden Stil (deutsch) halten.
