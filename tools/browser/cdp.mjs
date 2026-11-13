@@ -13,17 +13,29 @@ export async function chromeStarten({ port = 9333, breite = 1280, hoehe = 900 } 
   const proc = spawn(CHROME, [
     '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${profil}`,
     '--no-first-run', `--window-size=${breite},${hoehe}`, 'about:blank',
-  ], { stdio: 'ignore' });
+  ], { stdio: ['ignore', 'ignore', 'pipe'] });
+  // Chromes Meldungen aufheben: scheitert der Start, stehen sie in der Fehlermeldung.
+  let stderr = '';
+  proc.stderr.on('data', d => { stderr = (stderr + d).slice(-2000); });
+  let beendet = null;
+  proc.on('exit', code => { beendet = code; });
+  proc.on('error', e => { beendet = e.code || e.message; });   // z. B. Pfad falsch
 
+  // Ein kalter Start (frischer CI-Runner, leerer Cache) kann deutlich länger
+  // als 10 s dauern: bis zu 60 s warten, abbrechen, sobald Chrome beendet ist.
   let wsUrl = null;
-  for (let i = 0; i < 50 && !wsUrl; i++) {
+  for (let i = 0; i < 300 && !wsUrl && beendet === null; i++) {
     try {
       const l = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
       wsUrl = l.find(t => t.type === 'page')?.webSocketDebuggerUrl;
     } catch { /* Chrome startet noch */ }
     if (!wsUrl) await sleep(200);
   }
-  if (!wsUrl) { proc.kill(); throw new Error('Chrome nicht erreichbar'); }
+  if (!wsUrl) {
+    proc.kill();
+    throw new Error(`Chrome nicht erreichbar (${CHROME}${beendet !== null ? `, beendet mit ${beendet}` : ''})` +
+      (stderr.trim() ? `\n${stderr.trim()}` : ''));
+  }
 
   const ws = new WebSocket(wsUrl);
   await new Promise(r => ws.addEventListener('open', r, { once: true }));
