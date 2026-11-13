@@ -296,6 +296,20 @@ try {
   await b.js(`(() => { const sel = document.querySelector('#filter-auswahl'); sel.value = ''; sel.dispatchEvent(new Event('change')); })()`);
   await b.js(`localStorage.removeItem('geomaster.eu.filter.v1')`);
 
+  /* ── T16: alter gespeicherter Stoff (vor Meeren/Inseln/Klima) ── */
+  r = await b.js(`(() => {
+    const alt = { ...DATA_EU };
+    for (const k of ['meere', 'inseln', 'staedte', 'klimazonen', 'klimaorte', 'filter']) delete alt[k];
+    localStorage.setItem('geomaster.eu.stoff.v1', JSON.stringify(alt));
+    STOFF = stoffLaden(); THEMEN = themenFiltern(SET.themen(STOFF)); homeZeigen();
+    const n = id => THEMEN.find(t => t.id === id)?.items.length ?? 0;
+    return { meere: n('meere'), inseln: n('inseln'), klimazonen: n('klimazonen'), klimadiagramme: n('klimadiagramme'),
+      zeilen: document.querySelectorAll('#themenliste .thema').length };
+  })()`);
+  pruefe('T16: alter gespeicherter Stoff bekommt die neuen Listen aus dem eingebauten Stoff',
+    r.meere === 15 && r.inseln === 16 && r.klimazonen === 6 && r.klimadiagramme === 22 && r.zeilen === 12, JSON.stringify(r));
+  await b.js(`localStorage.removeItem('geomaster.eu.stoff.v1'); STOFF = stoffLaden(); THEMEN = themenFiltern(SET.themen(STOFF));`);
+
   /* ── T4: Stoff-Editor Europa nur mit EU-Schlüsseln ── */
   const vorStoff = await speicher();
   r = await b.js(`(() => {
