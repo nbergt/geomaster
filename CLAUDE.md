@@ -3,7 +3,8 @@
 - Massgeblich ist der aktuelle Auftrag des Benutzers. Die Europa-Erweiterung vom 26.10.2026 ist abgeschlossen; `geomaster-handoff/geomaster-handoff/AUFTRAG-EUROPA.md` und `ABSCHLUSSBERICHT.md` dokumentieren die damalige Umsetzung. Alte Phasenfreigaben sind kein neuer Auftrag.
 - Dieses Repository ist seit 13.11.2026 die vollständige Entwicklungsgrundlage. Arbeite in einem Branch und liefere Änderungen als Pull Request gegen `main`, sofern der Benutzer nichts anderes beauftragt. Die Live-App liegt unter https://nbergt.github.io/geomaster/.
 - Einrichtung und Übergabe: `ENTWICKLUNG.md` lesen. Node.js ab Version 22 verwenden; für Generatoren zuerst `npm ci --prefix tools`. Die reine App braucht keine Installation.
-- `tools/veroeffentlichen.mjs` ist ein historisches Skript für die frühere lokale Spiegelung nach `C:/Apps/GeoMaster-web`. Im GitHub-Workflow nicht ausführen. Änderungen werden über dieses Repository und die bestehende GitHub-Pages-Bereitstellung veröffentlicht.
+- `tools/veroeffentlichen.mjs` ist ein historisches Skript für die frühere lokale Spiegelung nach `C:/Apps/GeoMaster-web`. Im GitHub-Workflow nicht ausführen. Änderungen werden über dieses Repository veröffentlicht: `.github/workflows/pages.yml` prüft jeden PR, legt eine Testversion unter `…/geomaster/pr-<Nr>/` an und schreibt nach dem Merge auf `main` die Hauptseite in den Branch `gh-pages` (Ablauf in `ENTWICKLUNG.md`). `gh-pages` nicht von Hand ändern.
+- Letzter Arbeitsstand, Annahmen und offene Punkte: `BERICHT-2026-11-13.md`.
 - Die App ist Vanilla HTML/CSS/JS, gestartet per Doppelklick (`file://`). Klassische `<script>`-Tags mit Globals, **keine** ES-Module, Frameworks, Bundler oder TypeScript im Browser.
 - Zur Laufzeit gibt es keine Netzwerkzugriffe (kein CDN, keine Webfonts). Netzwerk ist nur in `tools/*` beim Bauen erlaubt, mit devDependencies in `tools/package.json`.
 - Der Schweizer Modus ist tabu, er wird nur über die Set-Abstraktion eingebunden:

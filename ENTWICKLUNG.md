@@ -19,6 +19,7 @@ Die Generatoren verwenden ihre Pakete aus `tools/node_modules/`.
 - `CLAUDE.md`: aktuelle Projektregeln, Schutz des Schweizer Modus und Prüfungen.
 - `README.md`: Bedienung, Architektur, Datenquellen und Generatorbefehle.
 - `tools/`: Prüfungen, Browser-Tests, Generatoren, gepflegte Europa-Listen und Rohdaten für Schweiz und Europa.
+- `BERICHT-2026-11-13.md`: Filter, Klima, neue Themen, App und Veröffentlichung vom 13.11.2026, mit Annahmen und offenen Punkten.
 - `ABSCHLUSSBERICHT.md`: Ergebnis, Entscheidungen und noch offene manuelle Tests der Europa-Erweiterung vom 26.10.2026.
 - `geomaster-handoff/geomaster-handoff/`: ursprünglicher Auftrag, Review und Länderliste als historische Referenz. Die massgebliche Liste für neue Generierungen ist `tools/laender-europa.csv`.
 
