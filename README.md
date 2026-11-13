@@ -46,6 +46,16 @@ Der Ordner lässt sich auf einen Stick oder ein Tablet kopieren und läuft dort
 genauso; der Lernfortschritt wird pro Gerät im Browser gespeichert, für die
 Schweiz und für Europa getrennt.
 
+**Als App installieren** (über https://nbergt.github.io/geomaster/):
+- Android, Chrome oder Edge am Computer: auf der Startseite «Als App
+  installieren» antippen (oder das Installieren-Symbol in der Adresszeile).
+- iPhone/iPad (Safari): Teilen-Menü → «Zum Home-Bildschirm».
+
+Die installierte App startet ohne Browserleiste und funktioniert nach dem
+ersten Öffnen auch ohne Internet (Service Worker `sw.js`). Per Doppelklick
+auf `index.html` bleibt alles wie bisher: dort gibt es weder Manifest noch
+Service Worker.
+
 Die Karte lässt sich vergrössern und verschieben: Mausrad, zwei Finger
 (Pinch), Ziehen oder die Knöpfe **+ / − / ⤢** (⤢ zeigt wieder die ganze Karte).
 Eine Antwort zählt erst beim Loslassen und nur, wenn kaum gezogen wurde.
@@ -130,6 +140,7 @@ node tools/fetch-wikidata-eu.mjs   # -> tools/raw-eu/wikidata-eu.json (Internet:
 node tools/build-data-eu.mjs       # -> js/data-eu.js     (offline)
 node tools/fetch-flaggen.mjs       # -> js/flaggen-eu.js  (Internet: flag-icons)
 node tools/fetch-worldclim-eu.mjs  # -> tools/raw-eu/worldclim-eu.json.gz (Internet: WorldClim)
+node tools/build-icons.mjs         # -> icons/*.png aus icons/*.svg (braucht Chrome, wie die Browser-Prüfungen)
 node tools/build-klima-eu.mjs      # -> js/klima-eu.js    (offline; nach build-geo-eu und build-data-eu)
 ```
 
@@ -199,6 +210,10 @@ js/klima-eu.js        Klimazonen und Klimadiagramm-Werte (autogeneriert)
 js/klimadiagramm.js   Zeichnet ein Klimadiagramm (Walter/Lieth) als SVG
 js/sets.js            Die beiden Karten: Themen, Texte, Toleranzen, Speicher, Filter
 js/app.js             Spiellogik
+js/pwa.js             Installierbar machen (Manifest, Service Worker, Knopf), nur über http(s)
+manifest.webmanifest  App-Manifest (Name, Farben, Icons)
+sw.js                 Service Worker: offline nutzbar; DATEIEN muss jede App-Datei enthalten
+icons/                App-Icon als SVG (Quelle) und PNG (tools/build-icons.mjs)
 LICENSES/             Lizenztexte
 tools/                Build- und Prüfskripte, Rohdaten
 ```

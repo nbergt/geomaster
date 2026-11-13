@@ -63,7 +63,10 @@ Seit 13.11.2026 veröffentlicht der Workflow `.github/workflows/pages.yml`:
 Bei jedem Push auf `main` (oder von Hand unter *Actions → Pages → Run
 workflow*) laufen `check.mjs --ch --eu`, `gesten.mjs` und `europa.mjs`; nur
 wenn alles besteht, gehen `index.html`, `css/`, `js/` und `LICENSES/` auf
-GitHub Pages. Pull Requests gegen `main` werden gleich geprüft, zusätzlich mit
+GitHub Pages. Veröffentlicht werden `index.html`, `manifest.webmanifest`, `sw.js`, `css/`,
+`js/`, `icons/` und `LICENSES/`. Eine neue App-Datei gehört in die Liste
+`DATEIEN` in `sw.js` (sonst fehlt sie offline; `check.mjs --eu` meldet das) und
+in den Kopierschritt des Workflows. Pull Requests gegen `main` werden gleich geprüft, zusätzlich mit
 dem CH-Browser-Vergleich gegen `main`, aber nicht veröffentlicht. Dafür muss
 unter *Settings → Pages → Build and deployment → Source* «GitHub Actions»
 gewählt sein.

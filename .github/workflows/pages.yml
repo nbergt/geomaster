@@ -84,7 +84,7 @@ jobs:
       - name: App-Dateien zusammenstellen
         run: |
           mkdir _site
-          cp -r index.html css js LICENSES _site/
+          cp -r index.html manifest.webmanifest sw.js css js icons LICENSES _site/
           touch _site/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3

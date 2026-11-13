@@ -473,6 +473,23 @@ async function euPruefen() {
     }
   }
 
+  /* ── Installierbare App: Manifest, Icons, Service Worker ── */
+  const html = readFileSync(join(WURZEL, 'index.html'), 'utf8');
+  const swText = readFileSync(join(WURZEL, 'sw.js'), 'utf8');
+  const swDateien = JSON.parse(/const DATEIEN = (\[[\s\S]*?\]);/.exec(swText)?.[1].replace(/'/g, '"').replace(/,\s*\]/, ']') ?? '[]');
+  const verweise = [...html.matchAll(/(?:src|href)="([^"#:]+)"/g)].map(m => m[1]);
+  for (const v of [...new Set([...verweise, 'js/pwa.js', 'manifest.webmanifest'])]) {
+    melde(existsSync(join(WURZEL, v)), `index.html verweist auf ${v}, die Datei fehlt`);
+    melde(swDateien.includes(v), `sw.js: ${v} fehlt in DATEIEN (offline nicht verfügbar)`);
+  }
+  for (const d of swDateien) if (d !== './') melde(existsSync(join(WURZEL, d)), `sw.js: ${d} gibt es nicht`);
+  const manifest = JSON.parse(readFileSync(join(WURZEL, 'manifest.webmanifest'), 'utf8'));
+  for (const i of manifest.icons) {
+    melde(existsSync(join(WURZEL, i.src)) && swDateien.includes(i.src), `Manifest-Icon ${i.src} fehlt (Datei oder sw.js)`);
+  }
+  melde(manifest.icons.some(i => i.sizes === '512x512' && !i.purpose) && manifest.icons.some(i => i.sizes === '192x192'),
+    'Manifest: Icons 192 und 512 px fehlen (nötig zum Installieren)');
+
   /* ── Flaggen (js/flaggen-eu.js) ── */
   const flaggenText = readFileSync(join(WURZEL, 'js', 'flaggen-eu.js'), 'utf8');
   vm.runInContext(flaggenText + '\nthis.FLAGGEN_EU = FLAGGEN_EU;', ctx, { filename: 'js/flaggen-eu.js' });
