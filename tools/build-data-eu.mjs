@@ -1,6 +1,7 @@
 // Erzeugt js/data-eu.js (DATA_EU, Lernstoff Europa), offline aus:
 //   tools/laender-europa.csv        Länder, Hauptstädte, Kennzeichen, Aliasse
-//   tools/stoff-eu.mjs              Flüsse, Gebirge, Gipfel (von Hand gepflegt)
+//   tools/stoff-eu.mjs              Flüsse, Gebirge, Gipfel, Meere, Inseln, Städte,
+//                                   Klimazonen, Klimadiagramm-Orte, Filter (von Hand gepflegt)
 //   tools/raw-eu/wikidata-eu.json   Koordinaten und Höhen (tools/fetch-wikidata-eu.mjs)
 //   node tools/build-data-eu.mjs
 //
@@ -11,7 +12,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { laenderLaden, AUSGESCHLOSSEN } from './lib/laender.mjs';
-import { FLUESSE, GEBIRGE, GIPFEL, HAUPTSTADT_HINWEIS, LAND_ARTIKEL } from './stoff-eu.mjs';
+import {
+  FLUESSE, GEBIRGE, GIPFEL, HAUPTSTADT_HINWEIS, LAND_ARTIKEL, MEERE, INSELN, STAEDTE, KLIMAZONEN, KLIMAORTE, FILTER,
+} from './stoff-eu.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(HERE, '..', 'js', 'data-eu.js');
@@ -80,8 +83,68 @@ const gipfel = GIPFEL.map(g => {
   return e;
 }).filter(Boolean);
 
+// --- weitere Städte und Klimadiagramm-Orte -----------------------------------
+// Koordinaten aus Wikidata; die Bezeichnung muss zum Namen oder Alias passen.
+function wdOrt(o) {
+  const wd = (WD.orte || []).find(x => x.wikidata === o.wikidata);
+  if (!wd) { fehler.push(`${o.name}: ${o.wikidata} fehlt in wikidata-eu.json (fetch-wikidata-eu.mjs laufen lassen)`); return null; }
+  if (![o.name, ...(o.alias || [])].map(normal).includes(normal(wd.label))) {
+    fehler.push(`${o.name}: Wikidata nennt ${o.wikidata} «${wd.label}»`);
+  }
+  const k = wd.koord.find(c => c.rang === 'preferred') ?? wd.koord[0];
+  return [r4(k.lon), r4(k.lat)];
+}
+const staedte = STAEDTE.map(o => {
+  const k = wdOrt(o);
+  if (!k) return null;
+  const e = { name: o.name };
+  if (o.alias) e.alias = o.alias;
+  return Object.assign(e, { land: o.land, lon: k[0], lat: k[1], wikidata: o.wikidata });
+}).filter(Boolean);
+
+const ortNachName = new Map([...hauptstaedte, ...staedte].map(o => [o.name, o]));
+const klimaorte = KLIMAORTE.map(o => {
+  let k = null;
+  if (o.wikidata) k = wdOrt(o);
+  else if (ortNachName.has(o.name)) k = [ortNachName.get(o.name).lon, ortNachName.get(o.name).lat];
+  else fehler.push(`Klimaort ${o.name}: weder Hauptstadt/Stadt noch Wikidata-ID`);
+  if (!KLIMAZONEN.some(z => z.key === o.zone)) fehler.push(`Klimaort ${o.name}: unbekannte Zone ${o.zone}`);
+  if (!laender.some(l => l.iso === o.land)) fehler.push(`Klimaort ${o.name}: unbekanntes Land ${o.land}`);
+  return k ? { name: o.name, land: o.land, zone: o.zone, lon: k[0], lat: k[1] } : null;
+}).filter(Boolean);
+
+for (const m of MEERE) if (!m.geo && !m.meerenge) fehler.push(`Meer ${m.name}: weder geo noch meerenge`);
+
+// --- Filter-Vorlagen ----------------------------------------------------------
+// Jeder Eintrag muss zu einem Objekt des Themas passen (Schlüssel oder Name).
+const auswahl = {
+  laender: laenderStoff.flatMap(l => [l.iso, l.name]),
+  hauptstaedte: laenderStoff.flatMap(l => [l.iso, l.name, l.hauptstadt]),
+  flaggen: laenderStoff.flatMap(l => [l.iso, l.name]),
+  kennzeichen: laenderStoff.flatMap(l => [l.iso, l.name, l.kfz]),
+  staedte: [...hauptstaedte, ...staedte].map(o => o.name),
+  fluesse: FLUESSE.flatMap(f => [f.geo, f.name]),
+  gebirge: GEBIRGE.flatMap(g => [g.geo, g.name]),
+  gipfel: gipfel.map(g => g.name),
+  meere: MEERE.map(m => m.name),
+  inseln: INSELN.flatMap(i => [i.geo, i.name]),
+  klimazonen: KLIMAZONEN.flatMap(z => [z.key, z.name]),
+  klimadiagramme: KLIMAORTE.map(o => o.name),
+};
+for (const f of FILTER) {
+  if (!f.id || !f.name) fehler.push(`Filter ohne id/name: ${JSON.stringify(f).slice(0, 60)}`);
+  for (const [thema, liste] of Object.entries(f.themen)) {
+    if (!auswahl[thema]) { fehler.push(`Filter ${f.id}: unbekanntes Thema ${thema}`); continue; }
+    if (liste === 'alle') continue;
+    for (const e of liste) if (!auswahl[thema].includes(e)) fehler.push(`Filter ${f.id}, ${thema}: «${e}» gibt es nicht`);
+  }
+}
+
 // --- prüfen und schreiben --------------------------------------------------
-const stoff = { laender: laenderStoff, hauptstaedte, fluesse: FLUESSE, gebirge: GEBIRGE, gipfel };
+const stoff = {
+  laender: laenderStoff, hauptstaedte, fluesse: FLUESSE, gebirge: GEBIRGE, gipfel,
+  meere: MEERE, inseln: INSELN, staedte, klimazonen: KLIMAZONEN, klimaorte, filter: FILTER,
+};
 const text = JSON.stringify(stoff);
 if (text.includes('ß')) fehler.push('«ß» im Stoff (Schweizer Schreibweise: ss)');
 for (const [iso, ne] of Object.entries(AUSGESCHLOSSEN)) {
@@ -98,7 +161,7 @@ const liste = (name, eintraege, kommentar) =>
 
 const js = `// AUTOGENERIERT von tools/build-data-eu.mjs - nicht von Hand ändern.
 // Gepflegt wird in tools/laender-europa.csv (Länder, Hauptstädte, Kennzeichen)
-// und tools/stoff-eu.mjs (Flüsse, Gebirge, Gipfel); danach neu erzeugen.
+// und tools/stoff-eu.mjs (übriger Stoff, Filter-Vorlagen); danach neu erzeugen.
 // Koordinaten und Höhen: Wikidata (CC0), abgerufen ${WD.abgerufen}.
 // lon/lat sind geografische Koordinaten (WGS84).
 
@@ -108,9 +171,16 @@ ${liste('hauptstaedte', hauptstaedte, 'Hauptstädte mit Koordinaten (Wikidata P3
 ${liste('fluesse', FLUESSE, 'Flüsse; geo = Name der Geometrie in js/geo-eu.js')}
 ${liste('gebirge', GEBIRGE, 'Gebirge; geo = Name der Geometrie in js/geo-eu.js')}
 ${liste('gipfel', gipfel, 'Gipfel mit Höhe (m) und Koordinaten (Wikidata P2044/P625)')}
+${liste('meere', MEERE, 'Meere (geo = Fläche in js/geo-eu.js) und Meerengen (Punkt in js/geo-eu.js)')}
+${liste('inseln', INSELN, 'Inseln und Halbinseln; geo = Fläche in js/geo-eu.js')}
+${liste('staedte', staedte, 'Weitere Städte (ausser Hauptstädten) mit Koordinaten (Wikidata P625)')}
+${liste('klimazonen', KLIMAZONEN, 'Klimazonen; Flächen und Einteilung in js/klima-eu.js')}
+${liste('klimaorte', klimaorte, 'Orte der Klimadiagramme; Monatswerte in js/klima-eu.js')}
+${liste('filter', FILTER, 'Filter-Vorlagen: Thema -> "alle" oder Liste von Schlüsseln/Namen')}
 };
 `;
 fs.writeFileSync(OUT, js);
 console.log(`geschrieben: ${OUT}  (${(Buffer.byteLength(js) / 1024).toFixed(0)} KB)`);
 console.log(`Länder ${laenderStoff.length}, Hauptstädte ${hauptstaedte.length}, Flüsse ${FLUESSE.length}, Gebirge ${GEBIRGE.length}, Gipfel ${gipfel.length}`);
+console.log(`Meere ${MEERE.length}, Inseln ${INSELN.length}, Städte ${staedte.length}, Klimazonen ${KLIMAZONEN.length}, Klimaorte ${klimaorte.length}, Filter ${FILTER.length}`);
 if (hinweise.length) console.log('Hinweise:\n  ' + hinweise.join('\n  '));

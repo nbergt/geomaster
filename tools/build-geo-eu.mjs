@@ -8,7 +8,8 @@
 //                                          (Krim bei UA, Kosovo eigenständig, Zypern ganz)
 //   ne_10m_rivers_lake_centerlines.geojson Flüsse
 //   ne_10m_rivers_europe.geojson           Flüsse, Ergänzungen (Quellläufe)
-//   ne_10m_geography_regions_polys.geojson Gebirge
+//   ne_10m_geography_regions_polys.geojson Gebirge, Inseln, Halbinseln
+//   ne_10m_geography_marine_polys.geojson  Meere, Meerengen (heruntergeladen 13.11.2026)
 //   ne_10m_lakes.geojson                   Seen
 //
 // Ablauf: projizieren (LAEA, Zentrum 52° N / 10° O, wie EPSG:3035) und auf den
@@ -175,7 +176,7 @@ const FLUSS_NAME = {
   Elbe: 'Elbe', Vistula: 'Weichsel', Oder: 'Oder', Loire: 'Loire', Seine: 'Seine',
   'Rhône': 'Rhone', Rhne: 'Rhone', Po: 'Po', Tajo: 'Tajo', Tejo: 'Tajo', Ebro: 'Ebro', Thames: 'Themse',
   Ural: 'Ural', Duero: 'Duero', Garonne: 'Garonne', Maas: 'Maas', Mosel: 'Mosel', Sava: 'Save',
-  Dniester: 'Dnister', Daugava: 'Düna', Neman: 'Memel',
+  Dniester: 'Dnister', Daugava: 'Düna', Neman: 'Memel', 'Severnaya Dvina': 'Nördliche Dwina',
 };
 // Bounding-Box [W, S, O, N], in der ein Teilstück liegen muss.
 const FLUSS_LAGE = { Don: [35, 46, 45, 55] };
@@ -221,12 +222,22 @@ const GEBIRGE_NAME = {
   'Vosges': 'Vogesen', 'Ardennes': 'Ardennen', 'Erzgebirge': 'Erzgebirge', 'Sudetes Mts.': 'Sudeten',
   'Tatra Mts.': 'Tatra', 'Cord. Cantábrica': 'Kantabrisches Gebirge', 'S. Nevada': 'Sierra Nevada',
   'Pindus Mts.': 'Pindos', 'Grampian Mts.': 'Schottisches Hochland',
+  'Massif Central': 'Zentralmassiv',
 };
+// Natural Earth führt das Zentralmassiv als Hochebene, nicht als Gebirge.
+const GEBIRGE_KLASSE = { 'Massif Central': 'Plateau' };
+// «Deutsche Mittelgebirge» (Lernkontrolle Europa, Nr. 5) gibt es in Natural
+// Earth nicht als ein Objekt; zusammengesetzt aus den dort vorhandenen
+// Mittelgebirgen in Deutschland und an seiner Grenze. Schwarzwald, Rheinisches
+// Schiefergebirge u. a. fehlen in Natural Earth.
+const GEBIRGE_TEIL = { Harz: ['Deutsche Mittelgebirge'], Erzgebirge: ['Deutsche Mittelgebirge'], 'Böhmerwald': ['Deutsche Mittelgebirge'] };
 for (const f of read('ne_10m_geography_regions_polys.geojson').features) {
-  const name = GEBIRGE_NAME[f.properties.NAME];
-  if (!name || f.properties.FEATURECLA !== 'Range/mtn') continue;
+  const ne = f.properties.NAME;
+  const namen = [GEBIRGE_NAME[ne], ...(GEBIRGE_TEIL[ne] || [])].filter(Boolean);
+  if (!namen.length || f.properties.FEATURECLA !== (GEBIRGE_KLASSE[ne] ?? 'Range/mtn')) continue;
   const g = alsGeom(projizieren(f.geometry));
-  if (g?.type === 'MultiPolygon') objekte.gebirge.push({ type: 'Feature', properties: { name }, geometry: g });
+  if (g?.type !== 'MultiPolygon') continue;
+  for (const name of namen) objekte.gebirge.push({ type: 'Feature', properties: { name }, geometry: g });
 }
 
 // --- topologisch vereinfachen ----------------------------------------------
@@ -374,11 +385,101 @@ const rivers = feature(einfach, einfach.objects.fluesse).features.map(f => {
   return { name, d: pfad(f.geometry, false), a: fix ? project(...fix).map(r1) : linienAnker(f.geometry) };
 }).filter(r => r.d).sort((a, b) => a.name.localeCompare(b.name, 'de'));
 
-const ranges = feature(einfach, einfach.objects.gebirge).features.map(f => {
-  const name = f.properties.name;
+// Gebirge aus mehreren Teilen (Deutsche Mittelgebirge) werden verschmolzen.
+const gebirgeNamen = [...new Set(einfach.objects.gebirge.geometries.map(g => g.properties.name))];
+const ranges = gebirgeNamen.map(name => {
+  const teile = einfach.objects.gebirge.geometries.filter(g => g.properties.name === name);
+  const geom = teile.length > 1 ? merge(einfach, teile) : feature(einfach, teile[0]).geometry;
   const fix = GEBIRGE_ANKER_FIX[name];
-  return { name, d: pfad(f.geometry, true, 0.5), a: fix ? project(...fix).map(r1) : innerPunkt(f.geometry) };
+  return { name, d: pfad(geom, true, 0.5), a: fix ? project(...fix).map(r1) : innerPunkt(geom) };
 }).filter(r => r.d).sort((a, b) => a.name.localeCompare(b.name, 'de'));
+
+// --- Meere, Meerengen, Inseln und Halbinseln -------------------------------
+// Eigene Topologie, damit die Vereinfachung der Länder, Flüsse und Gebirge
+// oben unverändert bleibt. Quelle: ne_10m_geography_marine_polys (Meere) und
+// ne_10m_geography_regions_polys (Inseln, Halbinseln). Namen nach der
+// Lernkontrolle Europa; mehrere Natural-Earth-Teile ergeben ein Meer.
+const MEER_TEILE = {
+  'Atlantischer Ozean': ['North Atlantic Ocean'],
+  // Nordpolarmeer im Kartenausschnitt: Arktischer Ozean, Barentssee, Weisses Meer.
+  'Nordpolarmeer': ['Arctic Ocean', 'Barents Sea', 'White Sea'],
+  'Europäisches Nordmeer': ['Norwegian Sea'],
+  'Nordsee': ['North Sea'],
+  'Ostsee': ['Baltic Sea', 'Gulf of Bothnia', 'Gulf of Finland', 'Gulf of Riga', 'Mecklenburger Bucht'],
+  'Ärmelkanal': ['English Channel'],
+  'Golf von Biskaya': ['Bay of Biscay'],
+  // Mittelmeer ohne die eigenen Lernstoff-Meere (Adria, Ionisches, Ägäisches Meer).
+  'Mittelmeer': ['Mediterranean Sea', 'Tyrrhenian Sea', 'Balearic Sea', 'Ligurian Sea', 'Alboran Sea',
+    'Golfe du Lion', 'Gulf of Gabès', 'Gulf of Sidra'],
+  'Adriatisches Meer': ['Adriatic Sea'],
+  'Ionisches Meer': ['Ionian Sea'],
+  // Das Kretische Meer gehört zum Ägäischen Meer.
+  'Ägäisches Meer': ['Aegean Sea', 'Sea of Crete'],
+  'Schwarzes Meer': ['Black Sea'],
+};
+// Meerengen sind auf der Karte zu schmal für eine Fläche: ein Punkt in der Mitte.
+const MEERENGE = { 'Strasse von Gibraltar': 'Strait of Gibraltar', 'Bosporus': 'Bosporus', 'Dardanellen': 'Dardanelles' };
+// NE-Name -> [Name, Klasse in Natural Earth]
+const INSEL_NAME = {
+  'ICELAND': 'Island', 'SCANDINAVIA': 'Skandinavien', 'KOLA PENINSULA': 'Kola', 'IRELAND': 'Irland',
+  'GREAT BRITAIN': 'Grossbritannien', 'PENÍNSULA IBÉRICA': 'Iberische Halbinsel',
+  'Balearic Islands': 'Balearen', 'Corse': 'Korsika', 'Sardegna': 'Sardinien', 'Sicilia': 'Sizilien',
+  'Pelopónnisos': 'Peloponnes', 'Crete': 'Kreta', 'Cyprus': 'Zypern', 'CRIMEA': 'Krim', 'JUTLAND': 'Jütland',
+};
+// Die Apenninenhalbinsel fehlt in Natural Earth: der grösste Teil Italiens
+// (Festland ohne Sizilien, Sardinien und kleinere Inseln) aus der Länderfläche.
+const HALBINSEL_AUS_LAND = { 'Apenninenhalbinsel': 'ITA' };
+
+const zusatz = { meere: [], inseln: [] };
+const meerNe = new Map(Object.entries(MEER_TEILE).flatMap(([name, teile]) => teile.map(t => [t, name])));
+const meerengen = [];
+const flaechenSchwerpunkt = geom => {
+  // geografischer Mittelpunkt der Aussenringe (für schmale Meerengen genügt das)
+  const pts = (geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates).flatMap(p => p[0]);
+  return [pts.reduce((s, p) => s + p[0], 0) / pts.length, pts.reduce((s, p) => s + p[1], 0) / pts.length];
+};
+for (const f of read('ne_10m_geography_marine_polys.geojson').features) {
+  const ne = f.properties.name;
+  const enge = Object.keys(MEERENGE).find(k => MEERENGE[k] === ne);
+  if (enge) {
+    const [lon, lat] = flaechenSchwerpunkt(f.geometry);
+    meerengen.push({ name: enge, lon: +lon.toFixed(4), lat: +lat.toFixed(4) });
+    continue;
+  }
+  const name = meerNe.get(ne);
+  if (!name) continue;
+  const g = alsGeom(projizieren(f.geometry));
+  if (g?.type === 'MultiPolygon') zusatz.meere.push({ type: 'Feature', properties: { name, ne }, geometry: g });
+}
+for (const f of read('ne_10m_geography_regions_polys.geojson').features) {
+  const name = INSEL_NAME[f.properties.NAME];
+  if (!name) continue;
+  const g = alsGeom(projizieren(f.geometry));
+  if (g?.type === 'MultiPolygon') zusatz.inseln.push({ type: 'Feature', properties: { name }, geometry: g });
+}
+for (const [name, ne] of Object.entries(HALBINSEL_AUS_LAND)) {
+  const f = read('ne_10m_admin_0_countries_deu.geojson').features.find(x => x.properties.ADM0_A3 === ne);
+  const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+  const festland = polys.reduce((a, b) => (b[0].length > a[0].length ? b : a));
+  const g = alsGeom(projizieren({ type: 'Polygon', coordinates: [festland[0]] }));
+  if (g) zusatz.inseln.push({ type: 'Feature', properties: { name }, geometry: g });
+}
+const topoZ = presimplify(topology(Object.fromEntries(Object.entries(zusatz)
+  .map(([k, features]) => [k, { type: 'FeatureCollection', features }])), 1e5));
+// Meere liegen unter dem Land, ihre Küsten sind kaum zu sehen: stärker
+// vereinfacht. Inseln und Halbinseln etwas stärker als die Länder.
+function verschmelzen(objekt, staerke) {
+  const topo = simplify(topoZ, staerke);
+  const obj = topo.objects[objekt];
+  const namen = [...new Set(obj.geometries.map(g => g.properties.name))];
+  return namen.map(name => {
+    const geom = merge(topo, obj.geometries.filter(g => g.properties.name === name));
+    return { name, d: pfad(geom, true, 0.5), a: innerPunkt(geom) };
+  }).filter(r => r.d).sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}
+const meere = verschmelzen('meere', 2);
+const inseln = verschmelzen('inseln', 0.6);
+meerengen.sort((a, b) => a.name.localeCompare(b.name, 'de'));
 
 // Kartenbreite in km entlang der waagrechten Mittellinie.
 const R_ERDE = 6371;
@@ -393,6 +494,11 @@ breiteKm = Math.round(breiteKm);
 
 // --- prüfen und schreiben --------------------------------------------------
 const fehler = [];
+for (const name of Object.keys(MEER_TEILE)) if (!meere.some(m => m.name === name)) fehler.push(`Meer ${name} fehlt`);
+for (const name of Object.keys(MEERENGE)) if (!meerengen.some(m => m.name === name)) fehler.push(`Meerenge ${name} fehlt`);
+for (const name of [...Object.values(INSEL_NAME), ...Object.keys(HALBINSEL_AUS_LAND)]) {
+  if (!inseln.some(m => m.name === name)) fehler.push(`Insel/Halbinsel ${name} fehlt`);
+}
 for (const l of LAENDER) {
   const c = countries.find(x => x.iso === l.iso);
   const k = kleinstaaten.find(x => x.iso === l.iso);
@@ -408,7 +514,7 @@ if (fehler.length) {
 
 const n = v => +v.toPrecision(15);
 const js = `// AUTOGENERIERT von tools/build-geo-eu.mjs - nicht von Hand ändern.
-// Grenzen, Flüsse, Gebirge: Natural Earth (Public Domain), Länder in der
+// Grenzen, Flüsse, Gebirge, Meere, Inseln: Natural Earth (Public Domain), Länder in der
 // Sichtweise Deutschland (ne_10m_admin_0_countries_deu).
 // Projektion: Lambert Azimuthal Equal Area, Zentrum ${ZENTRUM[1]}° N / ${ZENTRUM[0]}° O (Kugel).
 const GEO_EU = {
@@ -444,7 +550,12 @@ const GEO_EU = {
   countries: ${JSON.stringify(countries)},
   kleinstaaten: ${JSON.stringify(kleinstaaten)},
   rivers: ${JSON.stringify(rivers)},
-  ranges: ${JSON.stringify(ranges)}
+  ranges: ${JSON.stringify(ranges)},
+  // Meere (Flächen) und Meerengen (Punkt, geografisch)
+  meere: ${JSON.stringify(meere)},
+  meerengen: ${JSON.stringify(meerengen)},
+  // Inseln und Halbinseln
+  inseln: ${JSON.stringify(inseln)}
 };
 `;
 fs.writeFileSync(OUT, js);
@@ -453,5 +564,8 @@ console.log(`Länder ${countries.length}: ${countries.map(c => c.iso).join(' ')}
 console.log(`Kleinstaaten ${kleinstaaten.length}: ${kleinstaaten.map(k => k.iso).join(' ')}`);
 console.log(`Flüsse ${rivers.length}: ${rivers.map(r => r.name).join(', ')}`);
 console.log(`Gebirge ${ranges.length}: ${ranges.map(r => r.name).join(', ')}`);
+console.log(`Meere ${meere.length}: ${meere.map(r => r.name).join(', ')}`);
+console.log(`Meerengen ${meerengen.length}: ${meerengen.map(r => `${r.name} (${r.lon}, ${r.lat})`).join(', ')}`);
+console.log(`Inseln/Halbinseln ${inseln.length}: ${inseln.map(r => r.name).join(', ')}`);
 const kb = s => (Buffer.byteLength(JSON.stringify(s)) / 1024).toFixed(0);
-console.log(`Anteile KB: Länder ${kb(countries)}, Umriss ${kb(country)}, Umgebung ${kb(umgebung)}, Seen ${kb(seen)}, Flüsse ${kb(rivers)}, Gebirge ${kb(ranges)}`);
+console.log(`Anteile KB: Länder ${kb(countries)}, Umriss ${kb(country)}, Umgebung ${kb(umgebung)}, Seen ${kb(seen)}, Flüsse ${kb(rivers)}, Gebirge ${kb(ranges)}, Meere ${kb(meere)}, Inseln ${kb(inseln)}`);

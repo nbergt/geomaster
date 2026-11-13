@@ -30,7 +30,7 @@ function setLaden() {
 
 // Alles, was vom Set abhängt, wird in setAktivieren() (unten) neu gesetzt.
 let SET = setLaden();
-let STOFF, FORM, KM_PRO_EINHEIT, THEMEN, FORTSCHRITT;
+let STOFF, FORM, KM_PRO_EINHEIT, THEMEN, FORTSCHRITT, FILTER;
 
 /* ══ Stoff ═══════════════════════════════════════════════════════════════ */
 
@@ -195,16 +195,19 @@ function karteBauen() {
   }));
   // Nur zum Anschauen: Meer, graue Nachbarländer (Europa).
   for (const h of SET.hintergrund || []) karte.append(el('path', { class: h.klasse, d: h.d }));
-  karte.append(el('path', { class: 'land', d: geo.country }));
 
   // Eine Gruppe pro Formart, z. B. <g class="kantone"> mit <path class="kanton">.
-  for (const art of SET.formen) {
+  // Formarten mit `unten` (Meere) liegen unter der Landfläche.
+  const gruppe = art => {
     const g = el('g', { class: art.gruppe });
     for (const o of art.quelle) {
       g.append(el('path', { class: art.typ, d: o.d, 'data-key': o[art.schluessel] }));
     }
-    karte.append(g);
-  }
+    return g;
+  };
+  for (const art of SET.formen.filter(a => a.unten)) karte.append(gruppe(art));
+  karte.append(el('path', { class: 'land', d: geo.country }));
+  for (const art of SET.formen.filter(a => !a.unten)) karte.append(gruppe(art));
   karte.append(punkte, marken, aufloesung);
 }
 
@@ -325,7 +328,13 @@ function kartenSchichtSetzen(thema) {
   punkte.replaceChildren();
   marken.replaceChildren();
 
+  // Ein Ziel bekommt nur eine Marke, auch wenn mehrere Einträge darauf zeigen
+  // (Klimadiagramme: viele Orte, eine Zone).
+  const gesetzt = new Set();
   for (const it of thema.items) {
+    const zielKey = `${it.ziel.typ}|${it.ziel.id ?? `${it.ziel.lon},${it.ziel.lat}`}`;
+    if (gesetzt.has(zielKey)) continue;
+    gesetzt.add(zielKey);
     const [x, y] = ankerVon(it.ziel);
     if (it.ziel.typ === 'punkt') {
       const g = el('g', { class: 'punkt', 'data-key': it.key });
@@ -647,6 +656,9 @@ function frageZeigen() {
     }));
   } else if (item.beigabe?.kuerzel) {
     beigabe.append(el('span', { class: 'kuerzel' }, item.beigabe.kuerzel));
+  } else if (item.beigabe && SET.beigabeBauen) {
+    const extra = SET.beigabeBauen(item.beigabe);
+    if (extra) beigabe.append(extra);
   }
 
   // Erst die Stufe setzen, dann die Schicht bauen: das Entzerren der Namen
@@ -693,7 +705,11 @@ function geoObjekt(ziel) {
 
 function auswahlZeigen(item) {
   const feld = $('#antwortfeld');
-  const andere = mischen(lauf.thema.items.filter(i => i.key !== item.key && i.name !== item.name)).slice(0, 3);
+  // Jeder Name nur einmal (Klimadiagramme: mehrere Orte derselben Zone).
+  const andere = [];
+  for (const i of mischen(lauf.thema.items.filter(i => i.key !== item.key && i.name !== item.name))) {
+    if (andere.length < 3 && !andere.some(a => a.name === i.name)) andere.push(i);
+  }
   for (const kand of mischen([item, ...andere])) {
     const b = el('button', { class: 'wahl', type: 'button' }, kand.name);
     b.addEventListener('click', () => {
@@ -881,6 +897,7 @@ function homeZeigen() {
   schirmZeigen('home');
   railSetzen('', '');
   setWahlZeigen();
+  filterWahlZeigen();
 
   const liste = $('#themenliste');
   liste.replaceChildren();
@@ -916,6 +933,189 @@ $('#fortschritt-loeschen').addEventListener('click', () => {
   homeZeigen();
 });
 
+/* ══ Filter ══════════════════════════════════════════════════════════════
+   Ein Filter legt fest, welche Themen und Einträge abgefragt werden:
+   { id, name, themen: { <Themen-ID>: "alle" | [Schlüssel oder Namen] } }.
+   Themen, die fehlen, sind ausgeblendet. Vorlagen kommen aus dem Set (für
+   Europa aus tools/stoff-eu.mjs), eigene Filter liegen im Speicher des Sets.
+   Der Lernfortschritt hängt nicht am Filter (Schlüssel thema|stufe|key). */
+
+function filterLaden() {
+  if (!SET.filter) return null;
+  let roh = null;
+  try { roh = JSON.parse(localStorage.getItem(SET.filter.speicher) || 'null'); } catch { /* kaputt: leer */ }
+  const eigene = Array.isArray(roh?.eigene) ? roh.eigene.filter(f => f && f.id && f.name && f.themen) : [];
+  return { aktiv: typeof roh?.aktiv === 'string' ? roh.aktiv : null, eigene };
+}
+
+function filterSpeichern() {
+  try { localStorage.setItem(SET.filter.speicher, JSON.stringify(FILTER)); } catch { /* nur für diese Sitzung */ }
+}
+
+const alleFilter = () => (SET.filter ? [...SET.filter.vorlagen, ...FILTER.eigene] : []);
+const aktiverFilter = () => (FILTER?.aktiv ? alleFilter().find(f => f.id === FILTER.aktiv) ?? null : null);
+
+// Passt ein Filter-Eintrag zum Thema-Eintrag? Schlüssel, Name oder Etikett.
+const filterTrifft = (eintrag, it) => [it.key, it.name, it.etikett].some(w => w != null && normal(w) === normal(eintrag));
+
+function themenFiltern(themen, filter = aktiverFilter()) {
+  if (!filter) return themen;
+  return themen.map(t => {
+    const wahl = filter.themen[t.id];
+    if (!wahl) return null;
+    if (wahl === 'alle') return t;
+    const liste = Array.isArray(wahl) ? wahl : [];
+    const items = t.items.filter(it => liste.some(e => filterTrifft(e, it)));
+    return items.length ? { ...t, items } : null;
+  }).filter(Boolean);
+}
+
+function filterWahlZeigen() {
+  const zeile = $('#filter-wahl');
+  zeile.hidden = !SET.filter;
+  if (!SET.filter) return;
+  const wahl = $('#filter-auswahl');
+  wahl.replaceChildren(el('option', { value: '' }, 'Alle Inhalte'));
+  for (const f of alleFilter()) wahl.append(el('option', { value: f.id }, f.name));
+  wahl.value = aktiverFilter()?.id ?? '';
+}
+
+$('#filter-auswahl').addEventListener('change', e => {
+  FILTER.aktiv = e.target.value || null;
+  filterSpeichern();
+  THEMEN = themenFiltern(SET.themen(STOFF));
+  homeZeigen();
+});
+
+/* ── Filter bearbeiten ───────────────────────────────────────────────── */
+
+const filterDialog = $('#filter-dialog');
+let filterInArbeit = null;            // { id, name, themen } oder null (neu)
+
+// Die Liste im Dialog: ein Block je Thema, darin ein Häkchen je Eintrag.
+function filterDialogFuellen(filter) {
+  const themen = SET.themen(STOFF);
+  const box = $('#filter-themen');
+  box.replaceChildren();
+  $('#filter-name').value = filter.name;
+  for (const t of themen) {
+    const wahl = filter.themen[t.id];
+    const drin = it => wahl === 'alle' || (Array.isArray(wahl) && wahl.some(e => filterTrifft(e, it)));
+    const block = el('details', { class: 'filter-thema', 'data-thema': t.id });
+    const kopf = el('summary');
+    const an = el('input', { type: 'checkbox', class: 'filter-thema-an', 'aria-label': `${t.titel}: alle Einträge` });
+    const zahl = el('span', { class: 'filter-zahl' });
+    kopf.append(an, el('span', { class: 'filter-thema-titel' }, t.titel), zahl);
+    const liste = el('div', { class: 'filter-eintraege' });
+    // Gleiche Namen (Klimadiagramme) brauchen ein unterscheidendes Etikett.
+    const namen = t.items.map(it => it.name);
+    for (const it of t.items) {
+      const text = it.etikett ?? (namen.filter(n => n === it.name).length > 1 ? `${it.key} (${it.name})` : it.name);
+      const cb = el('input', { type: 'checkbox', value: it.key });
+      cb.checked = drin(it);
+      const lab = el('label', { class: 'filter-eintrag' });
+      lab.append(cb, document.createTextNode(' ' + text));
+      liste.append(lab);
+    }
+    const zaehlen = () => {
+      const alle = [...liste.querySelectorAll('input')];
+      const n = alle.filter(c => c.checked).length;
+      zahl.textContent = `${n}/${alle.length}`;
+      an.checked = n === alle.length;
+      an.indeterminate = n > 0 && n < alle.length;
+    };
+    an.addEventListener('click', e => e.stopPropagation());
+    an.addEventListener('change', () => {
+      for (const c of liste.querySelectorAll('input')) c.checked = an.checked;
+      zaehlen();
+    });
+    liste.addEventListener('change', zaehlen);
+    zaehlen();
+    block.append(kopf, liste);
+    box.append(block);
+  }
+  $('#filter-json').value = JSON.stringify(filterAusDialog(), null, 2);
+}
+
+// Liest den Dialog: ganz gewählte Themen werden "alle", leere fallen weg.
+function filterAusDialog() {
+  const themen = {};
+  for (const block of document.querySelectorAll('#filter-themen .filter-thema')) {
+    const alle = [...block.querySelectorAll('.filter-eintraege input')];
+    const an = alle.filter(c => c.checked).map(c => c.value);
+    if (!an.length) continue;
+    themen[block.dataset.thema] = an.length === alle.length ? 'alle' : an;
+  }
+  return { name: $('#filter-name').value.trim() || 'Eigener Filter', themen };
+}
+
+function filterMeldung(text, gut) {
+  const m = $('#filter-meldung');
+  m.textContent = text;
+  m.classList.toggle('gut', !!gut);
+}
+
+$('#filter-bearbeiten').addEventListener('click', () => {
+  const f = aktiverFilter();
+  const eigen = f && FILTER.eigene.some(e => e.id === f.id);
+  // Vorlagen bleiben unverändert; Änderungen werden ein eigener Filter.
+  filterInArbeit = eigen ? f : null;
+  const start = f
+    ? { name: eigen ? f.name : `${f.name} (angepasst)`, themen: f.themen }
+    : { name: 'Eigener Filter', themen: Object.fromEntries(SET.themen(STOFF).map(t => [t.id, 'alle'])) };
+  filterDialogFuellen(start);
+  $('#filter-loeschen').hidden = !eigen;
+  $('#filter-neu').hidden = !eigen;
+  filterMeldung(f && !eigen ? 'Vorlage: Speichern legt einen eigenen Filter an.' : '', true);
+  filterDialog.showModal();
+});
+
+$('#filter-json-laden').addEventListener('click', () => {
+  let neu;
+  try { neu = JSON.parse($('#filter-json').value); }
+  catch (e) { return filterMeldung('Das ist kein gültiges JSON: ' + e.message, false); }
+  if (!neu || typeof neu.themen !== 'object') return filterMeldung('Im Text fehlt «themen».', false);
+  // Unbekannte Einträge melden, damit Tippfehler auffallen.
+  const fremd = [];
+  for (const t of SET.themen(STOFF)) {
+    const w = neu.themen[t.id];
+    if (Array.isArray(w)) for (const e of w) if (!t.items.some(it => filterTrifft(e, it))) fremd.push(`${t.titel}: ${e}`);
+  }
+  const ids = new Set(SET.themen(STOFF).map(t => t.id));
+  for (const id of Object.keys(neu.themen)) if (!ids.has(id)) fremd.push(`Thema ${id}`);
+  filterDialogFuellen({ name: neu.name || $('#filter-name').value, themen: neu.themen });
+  filterMeldung(fremd.length ? 'Übernommen, aber unbekannt: ' + fremd.join(', ') : 'Text übernommen — jetzt noch speichern.', !fremd.length);
+});
+
+function filterUebernehmen(alsNeu) {
+  const neu = filterAusDialog();
+  if (!Object.keys(neu.themen).length) return filterMeldung('Mindestens ein Eintrag muss gewählt sein.', false);
+  if (filterInArbeit && !alsNeu) {
+    Object.assign(filterInArbeit, neu);
+  } else {
+    filterInArbeit = { id: 'eigen-' + Date.now().toString(36), ...neu };
+    FILTER.eigene.push(filterInArbeit);
+  }
+  FILTER.aktiv = filterInArbeit.id;
+  filterSpeichern();
+  THEMEN = themenFiltern(SET.themen(STOFF));
+  filterDialog.close();
+  homeZeigen();
+}
+
+$('#filter-speichern').addEventListener('click', () => filterUebernehmen(false));
+$('#filter-neu').addEventListener('click', () => filterUebernehmen(true));
+
+$('#filter-loeschen').addEventListener('click', () => {
+  if (!filterInArbeit || !confirm(`Den Filter «${filterInArbeit.name}» löschen?`)) return;
+  FILTER.eigene = FILTER.eigene.filter(f => f !== filterInArbeit);
+  FILTER.aktiv = null;
+  filterSpeichern();
+  THEMEN = themenFiltern(SET.themen(STOFF));
+  filterDialog.close();
+  homeZeigen();
+});
+
 /* ══ Stoff bearbeiten ════════════════════════════════════════════════════ */
 
 const stoffDialog = $('#stoff');
@@ -944,7 +1144,7 @@ $('#stoff-speichern').addEventListener('click', () => {
   catch (e) { return meldung('Speichern fehlgeschlagen: ' + e.message, false); }
 
   STOFF = neu;
-  THEMEN = SET.themen(STOFF);
+  THEMEN = themenFiltern(SET.themen(STOFF));
   stoffDialog.close();
   homeZeigen();
 });
@@ -978,7 +1178,8 @@ function setAktivieren(set) {
   STOFF = stoffLaden();
   FORM = formenBauen(set);
   KM_PRO_EINHEIT = kmProEinheit(set.geo);
-  THEMEN = set.themen(STOFF);
+  FILTER = filterLaden();
+  THEMEN = themenFiltern(set.themen(STOFF));
   FORTSCHRITT = fortschrittLaden();
 
   document.title = set.dokTitel;

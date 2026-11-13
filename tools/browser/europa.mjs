@@ -1,4 +1,4 @@
-// Prüft das Set Europa im Browser (Testcheckliste T2, T6–T12) mit echten
+// Prüft das Set Europa im Browser (Testcheckliste T2, T6–T15) mit echten
 // Maus- und Touch-Ereignissen. Fragen werden gezielt gesetzt (lauf.fragen),
 // geklickt wird auf Bildschirmkoordinaten wie ein Mensch.
 // Aufruf: node tools/browser/europa.mjs [ordner] [bilder-ordner]
@@ -79,7 +79,9 @@ try {
     aria: karte.getAttribute('aria-label'), set: localStorage.getItem('geomaster.set.v1'), themen: THEMEN.map(t => t.titel) })`);
   pruefe('Umschalter: Europa aktiv, Texte aus dem Set', r.sub === 'Blatt 2 : Europa' && r.aria === 'Karte von Europa' && r.set === 'eu',
     `${r.titel} | ${r.sub} | ${r.aria}`);
-  pruefe('Europa hat 7 Themen', r.themen.join(',') === 'Länder,Hauptstädte,Flaggen,Autokennzeichen,Flüsse,Gebirge,Gipfel', r.themen.join(', '));
+  const THEMEN_EU = 'Länder,Hauptstädte,Städte,Flaggen,Autokennzeichen,Flüsse,Gebirge,Gipfel,Meere und Meerengen,' +
+    'Inseln und Halbinseln,Klimazonen,Klimadiagramme';
+  pruefe('Europa hat 12 Themen', r.themen.join(',') === THEMEN_EU, r.themen.join(', '));
 
   /* ── T2: keine Kollision der Kürzel ── */
   for (const iso of ['BE', 'FR', 'LU']) {
@@ -213,6 +215,86 @@ try {
     e = await eintippen(eingabe);
     pruefe(`T12: ${name} (${key}) auf Stufe 4 markiert und benennbar`, m && m.b >= 4 && m.h >= 4 && e.text.startsWith('✓'), `${JSON.stringify(m)} ${e.text}`);
   }
+
+  /* ── T13: Meere, Meerengen, Inseln (Lernkontrolle Europa) auf der Blanko-Karte ── */
+  for (const [thema, key, lon, lat] of [['meere', 'Bosporus', 29.05, 41.1], ['meere', 'Nordsee', 3.5, 56],
+    ['meere', 'Ägäisches Meer', 25, 38.5], ['inseln', 'Sizilien', 14.2, 37.5], ['inseln', 'Krim', 34.2, 45.1],
+    ['staedte', 'Hamburg', 10, 53.55], ['gebirge', 'Zentralmassiv', 2.8, 45.2], ['fluesse', 'Nördliche Dwina', 41.5, 63.5]]) {
+    await frageSetzen(thema, 3, key);
+    a = await antwort(await geoPunkt(lon, lat));
+    pruefe(`T13: ${key} (${thema}) auf der Blanko-Karte`, a.richtig, a.text);
+  }
+  await frageSetzen('meere', 3, 'Nordsee');
+  a = await antwort(await geoPunkt(19, 58));                       // Ostsee statt Nordsee
+  pruefe('T13: Klick in die Ostsee zählt nicht als Nordsee', a.beantwortet && !a.richtig, a.text);
+
+  /* ── T14: Klimazonen und Klimadiagramme ── */
+  for (const [key, lon, lat] of [['ozeanisch', -1.5, 52.5], ['kontinental', 37.6, 55.7], ['mittelmeer', 14.3, 37.4]]) {
+    await frageSetzen('klimazonen', 3, key);
+    a = await antwort(await geoPunkt(lon, lat));
+    pruefe(`T14: Klimazone ${key} auf der Blanko-Karte`, a.richtig, a.text);
+  }
+  await frageSetzen('klimadiagramme', 2, 'Kiruna');
+  r = await b.js(`(() => {
+    const svg = document.querySelector('#frage-beigabe svg.klimadiagramm');
+    const wahl = [...document.querySelectorAll('#antwortfeld .wahl')].map(w => w.textContent);
+    return { svg: !!svg, saeulen: svg ? svg.querySelectorAll('.kd-saeule').length : 0, wahl };
+  })()`);
+  await bild('eu-klimadiagramm-2');
+  pruefe('T14: Klimadiagramm mit 12 Säulen, vier verschiedene Antworten', r.svg && r.saeulen === 12 && new Set(r.wahl).size === 4 &&
+    r.wahl.includes('Nordeuropäisches Klima'), JSON.stringify(r));
+  await b.js(`[...document.querySelectorAll('#antwortfeld .wahl')].find(w => w.textContent === 'Nordeuropäisches Klima').click()`);
+  e = await ergebnis();
+  pruefe('T14: richtige Zone gewählt, Ort und Merkmal in der Rückmeldung', e.text.startsWith('✓') && /Kiruna \(Schweden\)/.test(e.text), e.text);
+  await frageSetzen('klimadiagramme', 3, 'London');
+  e = await eintippen('Seeklima');
+  pruefe('T14: Alias «Seeklima» gilt als Ozeanisches Klima', e.text.startsWith('✓'), e.text);
+  await frageSetzen('klimadiagramme', 1, 'Rom');
+  r = await b.js(`[...karte.querySelectorAll('.marke')].map(m => m.textContent)`);
+  pruefe('T14: Stufe 1 beschriftet jede Zone genau einmal', r.length === 6 && new Set(r).size === 6, r.join(', '));
+
+  /* ── T15: Filter (Lernstoff-Auswahl) ── */
+  const vorFilter = await speicher();
+  r = await b.js(`(() => {
+    document.querySelector('#nach-hause').click();
+    const sel = document.querySelector('#filter-auswahl');
+    sel.value = 'test-europa-2026-11'; sel.dispatchEvent(new Event('change'));
+    return { themen: THEMEN.map(t => t.id + ':' + t.items.length).join(' '), zeilen: document.querySelectorAll('#themenliste .thema').length };
+  })()`);
+  pruefe('T15: Vorlage «Test Europa» blendet Flaggen, Kennzeichen und Gipfel aus und schränkt Einträge ein',
+    r.themen === 'laender:47 hauptstaedte:47 staedte:46 fluesse:8 gebirge:7 meere:10 inseln:12 klimazonen:6 klimadiagramme:22' && r.zeilen === 9, r.themen);
+  r = await b.js(`(() => {
+    document.querySelector('#filter-bearbeiten').click();
+    const block = document.querySelector('.filter-thema[data-thema="gebirge"]');
+    block.querySelector('input[value="Alpen"]').click();
+    document.querySelector('#filter-name').value = 'Ohne Alpen';
+    document.querySelector('#filter-speichern').click();
+    return { name: document.querySelector('#filter-auswahl').selectedOptions[0].textContent,
+      gebirge: THEMEN.find(t => t.id === 'gebirge').items.map(i => i.name).join(','),
+      vorlagen: DATA_EU.filter.length, offen: document.querySelector('#filter-dialog').open };
+  })()`);
+  pruefe('T15: Anpassen legt einen eigenen Filter an, Vorlage bleibt', r.name === 'Ohne Alpen' && !r.gebirge.includes('Alpen') &&
+    r.gebirge.split(',').length === 6 && !r.offen, JSON.stringify(r));
+  sp = await speicher();
+  const fSp = JSON.parse(sp['geomaster.eu.filter.v1'] || '{}');
+  pruefe('T15: Filter nur unter geomaster.eu.filter.v1, CH-Speicher unverändert',
+    fSp.eigene?.length === 1 && fSp.aktiv === fSp.eigene[0].id && sp['geomaster.fortschritt.v1'] === vorFilter['geomaster.fortschritt.v1'] &&
+    sp['geomaster.stoff.v1'] === vorFilter['geomaster.stoff.v1'] && !Object.keys(sp).some(k => /filter/.test(k) && k !== 'geomaster.eu.filter.v1'),
+    Object.keys(sp).join(', '));
+  r = await b.js(`(() => {
+    document.querySelector('#filter-bearbeiten').click();
+    document.querySelector('#filter-json').value = JSON.stringify({ name: 'Nur Klima', themen: { klimazonen: 'alle', klimadiagramme: ['Kiruna', 'Rom'] } });
+    document.querySelector('#filter-json-laden').click();
+    document.querySelector('#filter-neu').click();
+    return { themen: THEMEN.map(t => t.id + ':' + t.items.length).join(' '), optionen: document.querySelectorAll('#filter-auswahl option').length };
+  })()`);
+  pruefe('T15: Filter als Text einfügen und als neuen Filter speichern', r.themen === 'klimazonen:6 klimadiagramme:2' && r.optionen === 4, JSON.stringify(r));
+  await setWaehlen('Schweiz');
+  r = await b.js(`({ versteckt: document.querySelector('#filter-wahl').hidden, themen: THEMEN.length })`);
+  pruefe('T15: Schweiz ohne Filterzeile, alle 9 Themen', r.versteckt && r.themen === 9, JSON.stringify(r));
+  await setWaehlen('Europa');
+  await b.js(`(() => { const sel = document.querySelector('#filter-auswahl'); sel.value = ''; sel.dispatchEvent(new Event('change')); })()`);
+  await b.js(`localStorage.removeItem('geomaster.eu.filter.v1')`);
 
   /* ── T4: Stoff-Editor Europa nur mit EU-Schlüsseln ── */
   const vorStoff = await speicher();

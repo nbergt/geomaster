@@ -25,6 +25,27 @@ Die Generatoren verwenden ihre Pakete aus `tools/node_modules/`.
 Die beiden ursprünglichen Arbeitsblatt-Fotos bleiben lokal und wurden nicht in
 das öffentliche Repository übernommen. Die daraus erfassten Lerndaten sind enthalten.
 
+## Lernstoff aus Fotos (Filter)
+
+Der Benutzer gibt Fotos der Lernkontrolle bzw. der Lernziele. Daraus:
+
+1. Fehlende Einträge in `tools/stoff-eu.mjs` ergänzen (Geometrie in
+   `tools/build-geo-eu.mjs`, Koordinaten über Wikidata), dann die Generatoren
+   in der Reihenfolge aus dem README laufen lassen.
+2. Eine Vorlage in `FILTER` (`tools/stoff-eu.mjs`) anlegen: je Thema `"alle"`
+   oder die Liste der markierten Einträge. `build-data-eu.mjs` und
+   `check.mjs --eu` melden Einträge, die zu nichts passen.
+3. Was auf den Fotos unsicher ist (unleserlich, nicht markiert, nicht in den
+   Quellen), im Bericht nennen.
+
+## Netzwerk in Claude Code im Web
+
+Die Umgebung braucht für die Abrufe die Hosts `query.wikidata.org`,
+`www.wikidata.org` und `geodata.ucdavis.edu` (WorldClim). Node.js nutzt den
+Proxy nur mit `NODE_USE_ENV_PROXY=1`. Chrome für die Browser-Prüfungen läuft
+dort als Root nur mit `--no-sandbox`; dafür ein kleines Startskript als `CHROME`
+angeben, das Chromium mit diesem Schalter aufruft.
+
 ## Browser-Prüfungen
 
 Die Tests verwenden installiertes Chrome im Headless-Modus und Node.js ab Version
@@ -37,6 +58,15 @@ benötigt. Die früher verwendete lokale Sicherung unter `C:/Apps/` ist auf GitH
 nicht verfügbar. Fehlende Browser-Prüfungen ausdrücklich als nicht ausgeführt melden.
 
 ## Veröffentlichung und bisherige lokale Ordner
+
+Seit 13.11.2026 veröffentlicht der Workflow `.github/workflows/pages.yml`:
+Bei jedem Push auf `main` (oder von Hand unter *Actions → Pages → Run
+workflow*) laufen `check.mjs --ch --eu`, `gesten.mjs` und `europa.mjs`; nur
+wenn alles besteht, gehen `index.html`, `css/`, `js/` und `LICENSES/` auf
+GitHub Pages. Pull Requests gegen `main` werden gleich geprüft, zusätzlich mit
+dem CH-Browser-Vergleich gegen `main`, aber nicht veröffentlicht. Dafür muss
+unter *Settings → Pages → Build and deployment → Source* «GitHub Actions»
+gewählt sein.
 
 Die bestehende GitHub-Pages-Bereitstellung veröffentlicht die App unter
 https://nbergt.github.io/geomaster/. In dieser Übergabe bleiben die App-Dateien

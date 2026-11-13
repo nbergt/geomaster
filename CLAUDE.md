@@ -13,7 +13,8 @@
 - Das Europa-Set bekommt eigene Speicher-Schlüssel (`geomaster.eu.*`).
 - Georgien, Armenien, Aserbaidschan und Kasachstan sind ausgeschlossen: nur graue Umgebung auf der Karte, nicht klickbar, nicht im Stoff.
 - Sprache der Oberfläche und Daten ist Deutsch (Schweiz): kein «ß», traditionelle deutsche Ländernamen, offizielle bzw. moderne Formen als Alias.
-- Keine Daten erfinden. Quellen sind nur `laender-europa.csv`, Natural Earth (`_deu`-Variante), Wikidata und flag-icons. Unsicheres im Bericht melden.
+- Keine Daten erfinden. Quellen sind nur `laender-europa.csv`, Natural Earth (`_deu`-Variante), Wikidata, flag-icons und (seit 13.11.2026, für Klimazonen und Klimadiagramme) WorldClim 2.1. Unsicheres im Bericht melden.
+- Lernstoff-Fotos des Benutzers (Lernkontrolle, Lernziele) sind die Grundlage für Filter-Vorlagen (`FILTER` in `tools/stoff-eu.mjs`) und neue Stoff-Einträge; die Fotos selbst nicht ins Repository legen.
 - Vor jedem Abschluss `node tools/check.mjs --ch --eu` ausführen (CH-Regression gegen `tools/baseline-ch.json`, Europa-Daten) und die Ergebnisse berichten. Bei Änderungen an der Oberfläche zusätzlich `node tools/browser/gesten.mjs` und `node tools/browser/europa.mjs` ausführen. Chrome über die Umgebungsvariable `CHROME` angeben, wenn es nicht am Windows-Standardpfad liegt. Für den CH-Browser-Vergleich einen unveränderten Basis-Checkout verwenden: `node tools/browser/vergleich.mjs <Basis-Checkout> <Arbeits-Checkout> tools/browser/szenario-quiz.mjs` (Schweiz muss «identisch» bleiben). Nicht ausgeführte Prüfungen samt Grund offen nennen.
 - Europa-Stoff wird in `tools/laender-europa.csv` und `tools/stoff-eu.mjs` gepflegt; `js/data-eu.js`, `js/geo-eu.js` und `js/flaggen-eu.js` sind generiert (Befehle im README).
 - Generierte Dateien tragen den Kopf «AUTOGENERIERT … nicht von Hand ändern». Generatoren schreiben bei Fehlern **nichts**.

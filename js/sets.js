@@ -119,7 +119,8 @@ function themenSchweiz(S) {
 
 /* ══ Europa ══════════════════════════════════════════════════════════════
    Erwartet GEO_EU (js/geo-eu.js), DATA_EU (js/data-eu.js), FLAGGEN_EU
-   (js/flaggen-eu.js). Kleinstaaten sind ein Punkt (Kreis) mit der Koordinate
+   (js/flaggen-eu.js), KLIMA_EU (js/klima-eu.js) und klimadiagrammBauen
+   (js/klimadiagramm.js). Kleinstaaten sind ein Punkt (Kreis) mit der Koordinate
    aus GEO_EU.kleinstaaten; ein Klick in ihre Fläche (z. B. Luxemburg) zählt
    ebenfalls (Feld `staat` im Ziel). */
 
@@ -134,6 +135,8 @@ function themenEuropa(S) {
   // «von Frankreich», «von der Schweiz», «von den Niederlanden»
   const vonLand = l => (l.mehrzahl ? `von den ${l.name}n` : l.artikel === 'die' ? `von der ${l.name}` : `von ${l.name}`);
   const liegt = o => (o.mehrzahl ? 'liegen' : 'liegt');
+  const engen = new Map((typeof GEO_EU !== 'undefined' ? GEO_EU.meerengen || [] : []).map(m => [m.name, m]));
+  const klimaWerte = new Map(Object.entries(typeof KLIMA_EU !== 'undefined' ? KLIMA_EU.orte : {}));
 
   return [
     {
@@ -159,6 +162,18 @@ function themenEuropa(S) {
           ziel: ort ? punktZiel(ort) : landZiel(l),
         };
       }),
+    },
+    {
+      // Hauptstädte und weitere Städte der Lernkontrolle, als Punkt auf der Karte.
+      id: 'staedte', titel: 'Städte', info: 'Stadt auf der Karte zeigen',
+      modus: 'karte', kat: 'staedte',
+      items: [
+        ...S.laender.map(l => {
+          const ort = S.hauptstaedte.find(h => h.iso === l.iso);
+          return ort && { key: ort.name, name: ort.name, alias: l.hauptstadtAlias, ziel: punktZiel(ort) };
+        }).filter(Boolean),
+        ...(S.staedte || []).map(o => ({ key: o.name, name: o.name, alias: o.alias, ziel: punktZiel(o) })),
+      ].map(o => ({ ...o, frage: `Wo liegt ${o.name}?`, frageAlt: 'Welche Stadt ist markiert?' })),
     },
     {
       id: 'flaggen', titel: 'Flaggen', info: 'Flagge dem Land zuordnen',
@@ -211,6 +226,59 @@ function themenEuropa(S) {
         frageAlt: 'Welcher Gipfel ist markiert?',
         ziel: punktZiel(g),
       })),
+    },
+    {
+      // Meere als Fläche, Meerengen als Punkt (zu schmal für eine Fläche).
+      id: 'meere', titel: 'Meere und Meerengen', info: 'Meer oder Meerenge auf der Karte zeigen',
+      modus: 'karte', kat: 'meere',
+      items: (S.meere || []).map(m => {
+        const enge = m.meerenge && engen.get(m.name);
+        if (m.meerenge && !enge) return null;
+        return {
+          key: m.name, name: m.name, alias: m.alias,
+          frage: `Wo ${liegt(m)} ${mitArtikel(m)}?`,
+          frageAlt: enge ? 'Welche Meerenge ist markiert?' : 'Welches Meer ist markiert?',
+          ziel: enge ? punktZiel(enge) : { typ: 'meerflaeche', id: m.geo },
+        };
+      }).filter(Boolean),
+    },
+    {
+      id: 'inseln', titel: 'Inseln und Halbinseln', info: 'Insel oder Halbinsel auf der Karte zeigen',
+      modus: 'karte', kat: 'inseln',
+      items: (S.inseln || []).map(i => ({
+        key: i.geo, name: i.name, alias: i.alias,
+        frage: `Wo ${liegt(i)} ${mitArtikel(i)}?`,
+        frageAlt: 'Welche Insel oder Halbinsel ist markiert?',
+        ziel: { typ: 'insel', id: i.geo },
+      })),
+    },
+    {
+      id: 'klimazonen', titel: 'Klimazonen', info: 'Klimazone auf der Karte zeigen',
+      modus: 'karte', kat: 'klimazonen',
+      items: (S.klimazonen || []).map(z => ({
+        key: z.key, name: z.name, alias: z.alias, hinweis: z.merkmal,
+        frage: `Wo herrscht das ${z.frageName ?? z.name}?`,
+        frageAlt: 'Welche Klimazone ist markiert?',
+        ziel: { typ: 'klimazone', id: z.key },
+      })),
+    },
+    {
+      // Diagramm lesen und der Zone zuordnen; auf Stufe 4 die Zone zeigen.
+      id: 'klimadiagramme', titel: 'Klimadiagramme', info: 'Klimadiagramm der Klimazone zuordnen',
+      modus: 'nennen', kat: 'klimazonen',
+      items: (S.klimaorte || []).map(o => {
+        const z = (S.klimazonen || []).find(k => k.key === o.zone);
+        if (!z || !klimaWerte.has(o.name)) return null;
+        const land = S.laender.find(l => l.iso === o.land);
+        return {
+          key: o.name, name: z.name, alias: z.alias,
+          hinweis: `${o.name}${land ? ` (${land.name})` : ''}: ${z.merkmal}`,
+          frage: 'Zu welcher Klimazone passt dieses Klimadiagramm?',
+          frageAlt: 'Wo liegt die Klimazone, zu der dieses Klimadiagramm passt?',
+          beigabe: { klima: o.name },
+          ziel: { typ: 'klimazone', id: z.key },
+        };
+      }).filter(Boolean),
     },
   ];
 }
@@ -267,14 +335,25 @@ if (typeof GEO_EU !== 'undefined' && typeof DATA_EU !== 'undefined') {
       { klasse: 'meer', d: `M0 0H${GEO_EU.width}V${GEO_EU.height}H0Z` },
       { klasse: 'umgebung', d: GEO_EU.umgebung },
     ],
+    // `unten`: unter der Landfläche zeichnen (Meere, die das Land nicht verdecken dürfen).
     formen: [
+      { typ: 'meerflaeche', gruppe: 'meere',   quelle: GEO_EU.meere || [], schluessel: 'name', wasser: true, unten: true },
       { typ: 'staat',   gruppe: 'staaten', quelle: GEO_EU.countries, schluessel: 'iso' },
+      { typ: 'klimazone', gruppe: 'klimazonen', quelle: typeof KLIMA_EU !== 'undefined' ? KLIMA_EU.zonen : [], schluessel: 'key' },
       { typ: 'gebirge', gruppe: 'gebirgsflaechen', quelle: GEO_EU.ranges,    schluessel: 'name' },
+      { typ: 'insel',   gruppe: 'inseln',  quelle: GEO_EU.inseln || [], schluessel: 'name' },
       // Seen nur zur Darstellung, kein Quiz.
       { typ: 'see',     gruppe: 'seen',    quelle: [{ name: 'seen', d: GEO_EU.seen }], schluessel: 'name', wasser: true },
       { typ: 'fluss',   gruppe: 'fluesse', quelle: GEO_EU.rivers,    schluessel: 'name', wasser: true, linie: true },
     ],
-    katForm: { laender: 'staat', fluesse: 'fluss', gebirge: 'gebirge' },
+    katForm: { laender: 'staat', fluesse: 'fluss', gebirge: 'gebirge', meere: 'meerflaeche', inseln: 'insel', klimazonen: 'klimazone' },
+    // Bild zur Frage, das nicht aus `bilder` kommt: das Klimadiagramm.
+    beigabeBauen(beigabe) {
+      const werte = beigabe.klima && typeof KLIMA_EU !== 'undefined' && KLIMA_EU.orte[beigabe.klima];
+      return werte && typeof klimadiagrammBauen === 'function' ? klimadiagrammBauen(werte) : null;
+    },
+    // Auswahl, welche Themen und Einträge abgefragt werden (siehe app.js, Filter).
+    filter: { speicher: 'geomaster.eu.filter.v1', vorlagen: DATA_EU.filter || [] },
     // Distanzen geografisch (Klick -> lon/lat, Haversine), nicht über einen
     // festen km-Faktor: bei Europas Ausdehnung verzerrt die Karte zu stark.
     distanz: 'geo',

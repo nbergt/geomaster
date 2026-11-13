@@ -1,7 +1,7 @@
 // AUTOGENERIERT von tools/build-data-eu.mjs - nicht von Hand ändern.
 // Gepflegt wird in tools/laender-europa.csv (Länder, Hauptstädte, Kennzeichen)
-// und tools/stoff-eu.mjs (Flüsse, Gebirge, Gipfel); danach neu erzeugen.
-// Koordinaten und Höhen: Wikidata (CC0), abgerufen 2026-10-26.
+// und tools/stoff-eu.mjs (übriger Stoff, Filter-Vorlagen); danach neu erzeugen.
+// Koordinaten und Höhen: Wikidata (CC0), abgerufen 2026-11-13.
 // lon/lat sind geografische Koordinaten (WGS84).
 
 const DATA_EU = {
@@ -122,6 +122,8 @@ const DATA_EU = {
     {"name":"Tajo","artikel":"der","geo":"Tajo","alias":["Tejo"]},
     {"name":"Ebro","artikel":"der","geo":"Ebro"},
     {"name":"Themse","artikel":"die","geo":"Themse","alias":["Thames"]},
+    {"name":"Nördliche Dwina","artikel":"die","frageName":"Nördliche Dwina","geo":"Nördliche Dwina","alias":["Dwina","Sewernaja Dwina"]},
+    {"name":"Ural","artikel":"der","geo":"Ural","alias":["Uralfluss"]},
   ],
   // Gebirge; geo = Name der Geometrie in js/geo-eu.js
   gebirge: [
@@ -135,6 +137,8 @@ const DATA_EU = {
     {"name":"Dinarisches Gebirge","artikel":"das","frageName":"Dinarische Gebirge","geo":"Dinarisches Gebirge","alias":["Dinariden"]},
     {"name":"Balkangebirge","artikel":"das","geo":"Balkangebirge","alias":["Balkan"]},
     {"name":"Jura","artikel":"der","geo":"Jura"},
+    {"name":"Zentralmassiv","artikel":"das","geo":"Zentralmassiv","alias":["Massif Central","Französisches Zentralmassiv"]},
+    {"name":"Deutsche Mittelgebirge","artikel":"die","mehrzahl":true,"frageName":"Deutschen Mittelgebirge","geo":"Deutsche Mittelgebirge","alias":["Deutsches Mittelgebirge","Mittelgebirge"]},
   ],
   // Gipfel mit Höhe (m) und Koordinaten (Wikidata P2044/P625)
   gipfel: [
@@ -148,5 +152,92 @@ const DATA_EU = {
     {"name":"Mulhacén","artikel":"der","hoehe":3479,"lon":-3.3114,"lat":37.0533,"land":["ES"],"wikidata":"Q209528"},
     {"name":"Triglav","artikel":"der","hoehe":2864,"lon":13.8367,"lat":46.3783,"land":["SI"],"wikidata":"Q1024"},
     {"name":"Ben Nevis","artikel":"der","hoehe":1345,"lon":-5.0037,"lat":56.7969,"land":["GB"],"wikidata":"Q104674"},
+  ],
+  // Meere (geo = Fläche in js/geo-eu.js) und Meerengen (Punkt in js/geo-eu.js)
+  meere: [
+    {"name":"Atlantischer Ozean","artikel":"der","frageName":"Atlantische Ozean","geo":"Atlantischer Ozean","alias":["Atlantik","Nordatlantik"]},
+    {"name":"Nordpolarmeer","artikel":"das","geo":"Nordpolarmeer","alias":["Nördliches Eismeer","Arktischer Ozean","Barentssee"]},
+    {"name":"Europäisches Nordmeer","artikel":"das","frageName":"Europäische Nordmeer","geo":"Europäisches Nordmeer","alias":["Nordmeer","Norwegisches Meer"]},
+    {"name":"Nordsee","artikel":"die","geo":"Nordsee"},
+    {"name":"Ostsee","artikel":"die","geo":"Ostsee","alias":["Baltisches Meer"]},
+    {"name":"Ärmelkanal","artikel":"der","geo":"Ärmelkanal","alias":["Kanal","English Channel","La Manche"]},
+    {"name":"Golf von Biskaya","artikel":"der","geo":"Golf von Biskaya","alias":["Biskaya"]},
+    {"name":"Strasse von Gibraltar","artikel":"die","meerenge":true,"alias":["Gibraltar","Meerenge von Gibraltar"]},
+    {"name":"Mittelmeer","artikel":"das","geo":"Mittelmeer","alias":["Mittelländisches Meer"]},
+    {"name":"Adriatisches Meer","artikel":"das","frageName":"Adriatische Meer","geo":"Adriatisches Meer","alias":["Adria"]},
+    {"name":"Ionisches Meer","artikel":"das","frageName":"Ionische Meer","geo":"Ionisches Meer"},
+    {"name":"Ägäisches Meer","artikel":"das","frageName":"Ägäische Meer","geo":"Ägäisches Meer","alias":["Ägäis"]},
+    {"name":"Schwarzes Meer","artikel":"das","frageName":"Schwarze Meer","geo":"Schwarzes Meer"},
+    {"name":"Bosporus","artikel":"der","meerenge":true},
+    {"name":"Dardanellen","artikel":"die","mehrzahl":true,"meerenge":true},
+  ],
+  // Inseln und Halbinseln; geo = Fläche in js/geo-eu.js
+  inseln: [
+    {"name":"Island","geo":"Island"},
+    {"name":"Skandinavien","geo":"Skandinavien","alias":["Skandinavische Halbinsel"]},
+    {"name":"Kola","artikel":"die","frageName":"Halbinsel Kola","geo":"Kola","alias":["Halbinsel Kola","Kolahalbinsel"]},
+    {"name":"Irland","geo":"Irland"},
+    {"name":"Grossbritannien","geo":"Grossbritannien"},
+    {"name":"Iberische Halbinsel","artikel":"die","geo":"Iberische Halbinsel","alias":["Pyrenäenhalbinsel","Iberien"]},
+    {"name":"Balearen","artikel":"die","mehrzahl":true,"geo":"Balearen","alias":["Balearische Inseln","Mallorca"]},
+    {"name":"Apenninenhalbinsel","artikel":"die","geo":"Apenninenhalbinsel","alias":["Italienische Halbinsel","Italien","Apenninhalbinsel"]},
+    {"name":"Korsika","geo":"Korsika","alias":["Corse"]},
+    {"name":"Sardinien","geo":"Sardinien","alias":["Sardegna"]},
+    {"name":"Sizilien","geo":"Sizilien","alias":["Sicilia"]},
+    {"name":"Peloponnes","artikel":"der","geo":"Peloponnes","alias":["Peloponnesos"]},
+    {"name":"Kreta","geo":"Kreta"},
+    {"name":"Zypern","geo":"Zypern"},
+    {"name":"Krim","artikel":"die","geo":"Krim","alias":["Halbinsel Krim"]},
+    {"name":"Jütland","geo":"Jütland"},
+  ],
+  // Weitere Städte (ausser Hauptstädten) mit Koordinaten (Wikidata P625)
+  staedte: [
+    {"name":"Barcelona","land":"ES","lon":2.1769,"lat":41.3825,"wikidata":"Q1492"},
+    {"name":"Birmingham","land":"GB","lon":-1.9025,"lat":52.48,"wikidata":"Q2256"},
+    {"name":"Danzig","alias":["Gdańsk","Gdansk"],"land":"PL","lon":18.654,"lat":54.3483,"wikidata":"Q1792"},
+    {"name":"Hamburg","land":"DE","lon":10,"lat":53.55,"wikidata":"Q1055"},
+    {"name":"Istanbul","alias":["İstanbul","Konstantinopel"],"land":"TR","lon":28.9603,"lat":41.01,"wikidata":"Q406"},
+    {"name":"Mailand","alias":["Milano"],"land":"IT","lon":9.19,"lat":45.4669,"wikidata":"Q490"},
+    {"name":"Marseille","land":"FR","lon":5.3764,"lat":43.2967,"wikidata":"Q23482"},
+    {"name":"Neapel","alias":["Napoli"],"land":"IT","lon":14.2486,"lat":40.8358,"wikidata":"Q2634"},
+    {"name":"St. Petersburg","alias":["Sankt Petersburg","Petersburg","Leningrad"],"land":"RU","lon":30.3167,"lat":59.95,"wikidata":"Q656"},
+  ],
+  // Klimazonen; Flächen und Einteilung in js/klima-eu.js
+  klimazonen: [
+    {"key":"nordeuropaeisch","name":"Nordeuropäisches Klima","frageName":"nordeuropäische Klima","alias":["Nordeuropäisch","Subpolares Klima","Polarklima"],"merkmal":"Kalte Polarluft; kein Monat ohne Regen; kältester Monat unter −3 °C"},
+    {"key":"ozeanisch","name":"Ozeanisches Klima","frageName":"ozeanische Klima","alias":["Ozeanisch","Seeklima","Meeresklima"],"merkmal":"Nähe zum Meer; keine Trockenmonate; kältester Monat nicht unter 3 °C; Unterschied kältester–wärmster Monat etwa 10 °C"},
+    {"key":"uebergang","name":"Übergangsklima","frageName":"Übergangsklima","alias":["Übergang"],"merkmal":"Zwischen ozeanischem und kontinentalem Klima; Meeresluft wirkt noch; Unterschied Sommer–Winter etwa 20 °C"},
+    {"key":"kontinental","name":"Kontinentales Klima","frageName":"kontinentale Klima","alias":["Kontinentalklima","Kontinental","Landklima"],"merkmal":"Weit vom Meer; trockene Luft; heisse Sommer, sehr kalte Winter; sehr grosser Unterschied Sommer–Winter"},
+    {"key":"mittelmeer","name":"Mittelmeerklima","frageName":"Mittelmeerklima","alias":["Mediterranes Klima","Mittelmeer"],"merkmal":"Mild wegen des Meeres; Trockenzeit im Sommer; kältester Monat nicht unter 3 °C"},
+    {"key":"hochgebirge","name":"Hochgebirgsklima","frageName":"Hochgebirgsklima","alias":["Gebirgsklima","Hochgebirge"],"merkmal":"Von der Höhe bestimmt: je höher, desto kälter und desto mehr Niederschlag (Steigungsregen)"},
+  ],
+  // Orte der Klimadiagramme; Monatswerte in js/klima-eu.js
+  klimaorte: [
+    {"name":"Kiruna","land":"SE","zone":"nordeuropaeisch","lon":20.3028,"lat":67.8489},
+    {"name":"Archangelsk","land":"RU","zone":"nordeuropaeisch","lon":40.5375,"lat":64.5431},
+    {"name":"Tromsø","land":"NO","zone":"nordeuropaeisch","lon":18.9556,"lat":69.6517},
+    {"name":"London","land":"GB","zone":"ozeanisch","lon":-0.1275,"lat":51.5072},
+    {"name":"Dublin","land":"IE","zone":"ozeanisch","lon":-6.2603,"lat":53.3497},
+    {"name":"Bergen","land":"NO","zone":"ozeanisch","lon":5.3233,"lat":60.3925},
+    {"name":"Brest","land":"FR","zone":"ozeanisch","lon":-4.4861,"lat":48.3906},
+    {"name":"Kassel","land":"DE","zone":"uebergang","lon":9.4979,"lat":51.3158},
+    {"name":"Berlin","land":"DE","zone":"uebergang","lon":13.3833,"lat":52.5167},
+    {"name":"Warschau","land":"PL","zone":"uebergang","lon":21.0111,"lat":52.23},
+    {"name":"Prag","land":"CZ","zone":"uebergang","lon":14.4214,"lat":50.0875},
+    {"name":"Moskau","land":"RU","zone":"kontinental","lon":37.6175,"lat":55.7506},
+    {"name":"Kiew","land":"UA","zone":"kontinental","lon":30.5236,"lat":50.45},
+    {"name":"Bukarest","land":"RO","zone":"kontinental","lon":26.0978,"lat":44.4134},
+    {"name":"Wolgograd","land":"RU","zone":"kontinental","lon":44.5147,"lat":48.7086},
+    {"name":"Rom","land":"IT","zone":"mittelmeer","lon":12.4828,"lat":41.8931},
+    {"name":"Athen","land":"GR","zone":"mittelmeer","lon":23.7281,"lat":37.9842},
+    {"name":"Lissabon","land":"PT","zone":"mittelmeer","lon":-9.139,"lat":38.708},
+    {"name":"Marseille","land":"FR","zone":"mittelmeer","lon":5.3764,"lat":43.2967},
+    {"name":"Davos","land":"CH","zone":"hochgebirge","lon":9.8398,"lat":46.8091},
+    {"name":"Jungfraujoch","land":"CH","zone":"hochgebirge","lon":7.9831,"lat":46.5478},
+    {"name":"Hoher Sonnblick","land":"AT","zone":"hochgebirge","lon":12.9575,"lat":47.0539},
+  ],
+  // Filter-Vorlagen: Thema -> "alle" oder Liste von Schlüsseln/Namen
+  filter: [
+    {"id":"test-europa-2026-11","name":"Test Europa (16.11.2026)","quelle":"Lernziele «Test Europa 2026» und rot markierte Einträge der Lernkontrolle (Fotos vom 13.11.2026)","themen":{"laender":"alle","hauptstaedte":"alle","staedte":["Amsterdam","Andorra la Vella","Ankara","Athen","Bern","Barcelona","Birmingham","Bukarest","Berlin","Budapest","Brüssel","Bratislava","Dublin","Danzig","Helsinki","Hamburg","Istanbul","Kopenhagen","Kiew","London","Ljubljana","Lissabon","Luxemburg","Madrid","Moskau","Mailand","Minsk","Marseille","Neapel","Nikosia","Oslo","Paris","Prag","Rom","Riga","Reykjavik","Stockholm","St. Petersburg","Sofia","Sarajevo","Skopje","Tirana","Vilnius","Wien","Warschau","Zagreb"],"fluesse":["Loire","Seine","Rhein","Elbe","Donau","Po","Wolga","Rhone"],"gebirge":["Ural","Pyrenäen","Zentralmassiv","Alpen","Karpaten","Apennin","Balkangebirge"],"meere":["Atlantischer Ozean","Nordsee","Ostsee","Ärmelkanal","Strasse von Gibraltar","Mittelmeer","Ionisches Meer","Ägäisches Meer","Schwarzes Meer","Bosporus"],"inseln":["Island","Skandinavien","Irland","Grossbritannien","Iberische Halbinsel","Balearen","Korsika","Sardinien","Sizilien","Kreta","Zypern","Krim"],"klimazonen":"alle","klimadiagramme":"alle"}},
   ],
 };
