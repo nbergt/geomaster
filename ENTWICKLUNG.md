@@ -59,6 +59,15 @@ nicht verfügbar. Fehlende Browser-Prüfungen ausdrücklich als nicht ausgeführ
 
 ## Veröffentlichung und bisherige lokale Ordner
 
+Seit 13.11.2026 veröffentlicht der Workflow `.github/workflows/pages.yml`:
+Bei jedem Push auf `main` (oder von Hand unter *Actions → Pages → Run
+workflow*) laufen `check.mjs --ch --eu`, `gesten.mjs` und `europa.mjs`; nur
+wenn alles besteht, gehen `index.html`, `css/`, `js/` und `LICENSES/` auf
+GitHub Pages. Pull Requests gegen `main` werden gleich geprüft, zusätzlich mit
+dem CH-Browser-Vergleich gegen `main`, aber nicht veröffentlicht. Dafür muss
+unter *Settings → Pages → Build and deployment → Source* «GitHub Actions»
+gewählt sein.
+
 Die bestehende GitHub-Pages-Bereitstellung veröffentlicht die App unter
 https://nbergt.github.io/geomaster/. In dieser Übergabe bleiben die App-Dateien
 unverändert. Entwicklungsdateien allein erfordern keinen App-Build.

@@ -1,0 +1,95 @@
+# GeoMaster: prüfen und auf GitHub Pages veröffentlichen.
+#
+# - Pull Request gegen main: alle Prüfungen (Daten, Browser, CH-Vergleich
+#   gegen den Stand von main), keine Veröffentlichung.
+# - Push auf main oder Start von Hand: prüfen, dann nur die App-Dateien
+#   (index.html, css/, js/, LICENSES/) veröffentlichen. tools/ und die
+#   Rohdaten gehen nicht auf die Seite.
+#
+# Einmalig nötig: Settings → Pages → Build and deployment → Source:
+# «GitHub Actions».
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/package-lock.json
+
+      - name: Werkzeuge installieren
+        run: npm ci --prefix tools
+
+      - name: Daten prüfen (Schweiz gegen Baseline, Europa)
+        run: node tools/check.mjs --ch --eu
+
+      - name: Browser-Prüfungen (Gesten, Europa)
+        run: |
+          # Chrome headless ohne Sandbox (Ubuntu-Runner erlauben sie nicht immer).
+          printf '#!/bin/sh\nexec %s --no-sandbox "$@"\n' "$(command -v google-chrome || command -v chromium)" > "$RUNNER_TEMP/chrome.sh"
+          chmod +x "$RUNNER_TEMP/chrome.sh"
+          export CHROME="$RUNNER_TEMP/chrome.sh"
+          node tools/browser/gesten.mjs
+          node tools/browser/europa.mjs
+
+      # Schweiz muss im Browser «identisch» zum Stand von main bleiben.
+      - name: Basis-Checkout (main) für den CH-Vergleich
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: basis
+
+      - name: CH-Browser-Vergleich gegen main
+        if: github.event_name == 'pull_request'
+        run: |
+          # Chrome headless ohne Sandbox (Ubuntu-Runner erlauben sie nicht immer).
+          printf '#!/bin/sh\nexec %s --no-sandbox "$@"\n' "$(command -v google-chrome || command -v chromium)" > "$RUNNER_TEMP/chrome.sh"
+          chmod +x "$RUNNER_TEMP/chrome.sh"
+          export CHROME="$RUNNER_TEMP/chrome.sh"
+          node tools/browser/vergleich.mjs basis . tools/browser/szenario-quiz.mjs
+
+  veroeffentlichen:
+    needs: pruefen
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: App-Dateien zusammenstellen
+        run: |
+          mkdir _site
+          cp -r index.html css js LICENSES _site/
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
