@@ -956,6 +956,178 @@ dialog::backdrop { background: rgba(42, 36, 28, .55); }
   #karte .puls { animation: none; r: 9; }
 }
 
+/* ── Feinschliff (November 2026) ──────────────────────────────────────
+   Weichere Ecken, Kartenblätter und Themen als «Karten» auf dem Papier,
+   gefüllte Fortschrittsskala. Nur Gestaltung: Aufbau und Verhalten bleiben. */
+
+:root {
+  --ecke: 10px;
+  --ecke-klein: 7px;
+  --schatten: 0 1px 2px rgba(42, 36, 28, .07), 0 6px 18px -6px rgba(42, 36, 28, .16);
+  --schatten-hoch: 0 2px 4px rgba(42, 36, 28, .08), 0 12px 28px -8px rgba(42, 36, 28, .24);
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(255, 255, 255, .45), transparent 60%),
+    var(--grund);
+}
+
+/* Kopfleiste mit Icon. Höhe und Breite bleiben wie bisher, damit die Karte
+   gleich gross bleibt (tools/browser/vergleich.mjs klickt an feste Stellen). */
+.rail {
+  background: rgba(243, 239, 229, .92);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 0 var(--kontur-zart), 0 4px 14px -10px rgba(42, 36, 28, .35);
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-left: max(var(--rand), env(safe-area-inset-left));
+  padding-right: max(var(--rand), env(safe-area-inset-right));
+}
+
+.wortmarke {
+  min-height: 44px;                       /* Fingerziel, wie alle Knöpfe */
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  justify-items: start;
+}
+.wortmarke-gm, .wortmarke-sub { grid-column: 2; }
+.wortmarke-icon {
+  grid-row: 1 / 3;
+  grid-column: 1;
+  margin-right: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  box-shadow: 0 1px 3px rgba(42, 36, 28, .3);
+}
+
+/* Knöpfe */
+.knopf { border-radius: var(--ecke-klein); box-shadow: 0 1px 2px rgba(42, 36, 28, .25); transition: background .15s, transform .1s; }
+.knopf:active { transform: translateY(1px); }
+.knopf-zweit { box-shadow: inset 0 0 0 1.5px var(--tinte); }
+.knopf-schlicht { border-radius: var(--ecke-klein) var(--ecke-klein) 0 0; transition: color .15s, border-color .15s; }
+
+/* Startseite */
+.home-kopf h1 { letter-spacing: -.005em; }
+
+.set-wahl { gap: 0; }
+.set-knopf { transition: background .15s, color .15s; }
+.set-knopf:first-child { border-radius: 999px 0 0 999px; padding-left: 26px; }
+.set-knopf:last-child { border-radius: 0 999px 999px 0; padding-right: 26px; }
+.set-knopf[aria-pressed="true"] { box-shadow: 0 2px 6px -2px rgba(42, 36, 28, .5); }
+
+.filter-wahl {
+  padding: 10px 12px;
+  background: var(--papier);
+  border: 1px solid var(--kontur-zart);
+  border-radius: var(--ecke);
+  box-shadow: var(--schatten);
+}
+#filter-auswahl { border-radius: var(--ecke-klein); border-color: var(--kontur-zart); }
+
+.themenliste {
+  display: grid;
+  gap: 10px;
+  border-top: 0;
+}
+
+.thema {
+  padding: 12px 14px 12px 18px;
+  background: var(--papier);
+  border: 1px solid var(--kontur-zart);
+  border-radius: var(--ecke);
+  box-shadow: var(--schatten);
+  transition: box-shadow .2s, transform .2s, border-color .2s;
+  position: relative;
+  overflow: hidden;
+}
+/* Farbiger Rand links wie ein Registerreiter. */
+.thema::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--kontur);
+  opacity: .55;
+}
+.thema:hover { box-shadow: var(--schatten-hoch); border-color: var(--kontur); transform: translateY(-1px); }
+
+.skala { gap: 3px; }
+.skala i { border-radius: 3px; height: 6px; }
+.skala i.halb { height: 13px; }
+.skala i.voll { height: 22px; }
+
+.stufe-knopf {
+  border-radius: var(--ecke-klein);
+  background: #fbf9f4;
+  font-weight: var(--fett);
+  transition: background .15s, border-color .15s, color .15s, transform .1s;
+}
+.stufe-knopf:hover { background: #fff; transform: translateY(-1px); }
+.stufe-knopf[data-erledigt="ja"] { box-shadow: 0 2px 6px -2px rgba(76, 112, 59, .7); }
+
+.home-fuss { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+.home-fuss .quellen { flex-basis: 100%; }
+
+.installieren-hinweis { margin: 0; font-size: 14px; color: var(--tinte-matt); }
+
+/* Quiz */
+.blatt {
+  border-radius: var(--ecke);
+  overflow: hidden;
+  border-color: var(--kontur-zart);
+  box-shadow: var(--schatten-hoch);
+}
+.frageleiste { background: linear-gradient(180deg, #ece5d4, var(--papier-tief)); border-bottom-color: var(--kontur-zart); }
+.antwortfeld:not(:empty) { border-top-color: var(--kontur-zart); }
+.kartenfeld { background: #f7f4ec; }
+
+.zoom-knopf { border-radius: var(--ecke-klein); border-color: var(--kontur-zart); box-shadow: var(--schatten); }
+
+.wahl { border-radius: var(--ecke-klein); background: #fbf9f4; transition: border-color .15s, background .15s, transform .1s; }
+.wahl:hover:not(:disabled) { background: #fff; transform: translateY(-1px); }
+.tippfeld input { border-radius: var(--ecke-klein); }
+
+/* Rückmeldung als Karte mit Farbstreifen: grün richtig, rot daneben. */
+.rueckmeldung {
+  padding: 10px 12px 10px 16px;
+  background: var(--papier);
+  border: 1px solid var(--kontur-zart);
+  border-left: 5px solid var(--wald);
+  border-radius: var(--ecke);
+  box-shadow: var(--schatten);
+  animation: einblenden .18s ease-out;
+}
+.rueckmeldung:has(.daneben) { border-left-color: var(--signal); }
+
+@keyframes einblenden {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Ergebnis */
+.protokoll {
+  border-top: 0;
+  background: var(--papier);
+  border: 1px solid var(--kontur-zart);
+  border-radius: var(--ecke);
+  box-shadow: var(--schatten);
+  overflow: hidden;
+}
+.protokoll li { padding: 10px 14px; }
+.protokoll li:last-child { border-bottom: 0; }
+
+/* Dialoge */
+dialog { border-radius: 14px; border-color: var(--kontur-zart); box-shadow: 0 24px 60px -12px rgba(42, 36, 28, .45); }
+.filter-themen { border-radius: var(--ecke-klein); }
+
+@media (prefers-reduced-motion: reduce) {
+  .thema, .stufe-knopf, .wahl, .knopf, .rueckmeldung { transition: none; animation: none; }
+  .thema:hover, .stufe-knopf:hover, .wahl:hover:not(:disabled) { transform: none; }
+}
+
 /* ── Schmale Fenster ──────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
@@ -972,4 +1144,14 @@ dialog::backdrop { background: rgba(42, 36, 28, .55); }
 @media (max-width: 640px), (pointer: coarse) {
   .stufe-knopf { width: 44px; height: 44px; }
   .knopf, .knopf-schlicht, .wahl { min-height: 44px; }
+}
+
+/* Handy: kompakter Kopf, Text etwas kleiner, Filterzeile untereinander. */
+@media (max-width: 640px) {
+  .home-kopf .lauftext { font-size: 15px; }
+  /* Kein Platz neben dem Rundentext: auf dem Handy ohne Icon (Kopf bleibt gleich hoch). */
+  .wortmarke-icon { display: none; }
+  .filter-wahl #filter-auswahl { flex-basis: 100%; order: 2; }
+  .filter-wahl #filter-bearbeiten { order: 1; margin-left: auto; }
+  .thema { padding-left: 16px; }
 }
