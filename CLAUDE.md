@@ -19,3 +19,4 @@
 - Europa-Stoff wird in `tools/laender-europa.csv` und `tools/stoff-eu.mjs` gepflegt; `js/data-eu.js`, `js/geo-eu.js` und `js/flaggen-eu.js` sind generiert (Befehle im README).
 - Generierte Dateien tragen den Kopf «AUTOGENERIERT … nicht von Hand ändern». Generatoren schreiben bei Fehlern **nichts**.
 - Kommentare und Bezeichner im bestehenden Stil (deutsch) halten.
+- Offene Entscheidung: Zu Beginn jeder Session den Benutzer fragen, ob der Arbeitsablauf aus Issue #7 (https://github.com/nbergt/geomaster/issues/7) jetzt geregelt werden soll. Diesen Punkt entfernen, sobald entschieden ist.
