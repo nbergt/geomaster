@@ -1,13 +1,18 @@
-# GeoMaster: prüfen und auf GitHub Pages veröffentlichen.
+# GeoMaster: prüfen, veröffentlichen und pro Pull Request eine Testversion.
 #
-# - Pull Request gegen main: alle Prüfungen (Daten, Browser, CH-Vergleich
-#   gegen den Stand von main), keine Veröffentlichung.
-# - Push auf main oder Start von Hand: prüfen, dann nur die App-Dateien
-#   (index.html, css/, js/, LICENSES/) veröffentlichen. tools/ und die
-#   Rohdaten gehen nicht auf die Seite.
+# Alles liegt im Branch gh-pages (GitHub Pages: «Deploy from a branch»,
+# Branch gh-pages, Ordner / (root)):
+#   /           Hauptseite, Stand von main
+#   /pr-<Nr>/   Testversion eines offenen Pull Requests
 #
-# Einmalig nötig: Settings → Pages → Build and deployment → Source:
-# «GitHub Actions».
+# - Push auf main oder Start von Hand: prüfen, dann die App-Dateien in die
+#   Wurzel von gh-pages legen (die pr-Ordner bleiben).
+# - Pull Request (aus diesem Repository): prüfen inkl. CH-Vergleich gegen
+#   main, dann die Testversion nach pr-<Nr>/ legen und den Link im PR nennen.
+# - Pull Request geschlossen oder gemergt: pr-<Nr>/ wieder löschen.
+# Veröffentlicht werden nur die App-Dateien; tools/ und Rohdaten nicht.
+# Gleichzeitige Läufe schreiben in verschiedene Ordner; ein abgelehnter Push
+# wird nach «pull --rebase» bis zu dreimal wiederholt.
 name: Pages
 
 on:
@@ -15,17 +20,22 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: pages-${{ github.ref }}
+  group: pages-${{ github.event.pull_request.number || github.ref }}-${{ github.event.action == 'closed' && 'zu' || 'auf' }}
   cancel-in-progress: true
+
+env:
+  APP_DATEIEN: index.html manifest.webmanifest sw.js css js icons LICENSES
 
 jobs:
   pruefen:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,12 +52,15 @@ jobs:
       - name: Daten prüfen (Schweiz gegen Baseline, Europa)
         run: node tools/check.mjs --ch --eu
 
-      - name: Browser-Prüfungen (Gesten, Europa)
+      - name: Chrome vorbereiten
         run: |
           # Chrome headless ohne Sandbox (Ubuntu-Runner erlauben sie nicht immer).
           printf '#!/bin/sh\nexec %s --no-sandbox "$@"\n' "$(command -v google-chrome || command -v chromium)" > "$RUNNER_TEMP/chrome.sh"
           chmod +x "$RUNNER_TEMP/chrome.sh"
-          export CHROME="$RUNNER_TEMP/chrome.sh"
+          echo "CHROME=$RUNNER_TEMP/chrome.sh" >> "$GITHUB_ENV"
+
+      - name: Browser-Prüfungen (Gesten, Europa)
+        run: |
           node tools/browser/gesten.mjs
           node tools/browser/europa.mjs
 
@@ -61,35 +74,99 @@ jobs:
 
       - name: CH-Browser-Vergleich gegen main
         if: github.event_name == 'pull_request'
-        run: |
-          # Chrome headless ohne Sandbox (Ubuntu-Runner erlauben sie nicht immer).
-          printf '#!/bin/sh\nexec %s --no-sandbox "$@"\n' "$(command -v google-chrome || command -v chromium)" > "$RUNNER_TEMP/chrome.sh"
-          chmod +x "$RUNNER_TEMP/chrome.sh"
-          export CHROME="$RUNNER_TEMP/chrome.sh"
-          node tools/browser/vergleich.mjs basis . tools/browser/szenario-quiz.mjs
+        run: node tools/browser/vergleich.mjs basis . tools/browser/szenario-quiz.mjs
 
+  # Hauptseite (main) bzw. Testversion (PR) in den Branch gh-pages legen.
   veroeffentlichen:
     needs: pruefen
-    if: github.event_name != 'pull_request'
+    # PRs aus Forks dürfen nicht schreiben: dort keine Testversion.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: App-Dateien zusammenstellen
+      - name: gh-pages holen (oder neu anlegen)
         run: |
-          mkdir _site
-          cp -r index.html manifest.webmanifest sw.js css js icons LICENSES _site/
-          touch _site/.nojekyll
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
+            git clone --single-branch --branch gh-pages "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$RUNNER_TEMP/seite"
+          else
+            git init -b gh-pages "$RUNNER_TEMP/seite"
+            git -C "$RUNNER_TEMP/seite" remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          fi
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Dateien einsetzen
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          SEITE="$RUNNER_TEMP/seite"
+          if [ -n "$PR" ]; then
+            ZIEL="$SEITE/pr-$PR"
+            rm -rf "$ZIEL" && mkdir -p "$ZIEL"
+          else
+            ZIEL="$SEITE"
+            # Wurzel leeren, aber .git und die Testversionen der offenen PRs behalten.
+            find "$SEITE" -mindepth 1 -maxdepth 1 ! -name .git ! -name 'pr-*' -exec rm -rf {} +
+          fi
+          cp -r $APP_DATEIEN "$ZIEL/"
+          touch "$SEITE/.nojekyll"
+
+      - name: Nach gh-pages pushen
+        env:
+          WAS: ${{ github.event.pull_request.number && format('Testversion PR {0}', github.event.pull_request.number) || 'Hauptseite' }}
+        run: |
+          cd "$RUNNER_TEMP/seite"
+          git add -A
+          if git diff --cached --quiet; then echo "nichts geändert"; exit 0; fi
+          git commit -q -m "$WAS: ${GITHUB_SHA::7}"
+          for i in 1 2 3; do
+            git push origin gh-pages && exit 0
+            # Ein anderer Lauf war schneller (anderer pr-Ordner): darauf aufsetzen.
+            git pull --rebase origin gh-pages || true
+          done
+          exit 1
+
+      - name: Link im Pull Request nennen
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
         with:
-          path: _site
+          script: |
+            const nr = context.payload.pull_request.number;
+            const url = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${nr}/`;
+            const marke = '<!-- geomaster-vorschau -->';
+            const text = `${marke}\n**Testversion:** ${url}\n\nStand ${context.sha.slice(0, 7)}. ` +
+              'Wird bei jedem Push aktualisiert und beim Schliessen des PRs gelöscht. ' +
+              'Hinweis: Fortschritt und Filter teilt die Testversion mit der Hauptseite (gleiche Adresse), ' +
+              'darum am besten in einem privaten Fenster testen.';
+            const alle = await github.paginate(github.rest.issues.listComments, { ...context.repo, issue_number: nr });
+            const alt = alle.find(k => k.body?.includes(marke));
+            if (alt) await github.rest.issues.updateComment({ ...context.repo, comment_id: alt.id, body: text });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number: nr, body: text });
 
-      - id: deploy
-        uses: actions/deploy-pages@v4
+  # Testversion eines geschlossenen oder gemergten PRs entfernen.
+  aufraeumen:
+    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: pr-Ordner löschen
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git clone --single-branch --branch gh-pages "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" seite || exit 0
+          cd seite
+          [ -d "pr-$PR" ] || { echo "keine Testversion"; exit 0; }
+          git rm -rq "pr-$PR"
+          git commit -q -m "Testversion PR $PR entfernt"
+          for i in 1 2 3; do
+            git push origin gh-pages && exit 0
+            git pull --rebase origin gh-pages || true
+          done
+          exit 1
