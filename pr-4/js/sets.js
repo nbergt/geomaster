@@ -369,6 +369,8 @@ if (typeof GEO_EU !== 'undefined' && typeof DATA_EU !== 'undefined') {
     // etwas grösser als auf der Schweizer Karte.
     massstab: 1.3,
     speicher: { fortschritt: 'geomaster.eu.fortschritt.v1', stoff: 'geomaster.eu.stoff.v1' },
+    // Gespeicherter Stoff ohne neuere Listen: diese aus DATA_EU ergänzen.
+    stoffErgaenzen: true,
     pflichtListen: ['laender', 'hauptstaedte', 'fluesse', 'gebirge', 'gipfel'],
     zoom: true,
   };

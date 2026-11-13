@@ -37,9 +37,19 @@ let STOFF, FORM, KM_PRO_EINHEIT, THEMEN, FORTSCHRITT, FILTER;
 function stoffLaden() {
   try {
     const roh = localStorage.getItem(SET.speicher.stoff);
-    if (roh) return JSON.parse(roh);
+    if (roh) return stoffErgaenzen(JSON.parse(roh));
   } catch { /* kaputter Eintrag: Standardstoff verwenden */ }
   return SET.stoff;
+}
+
+// Ein früher gespeicherter Stoff kennt neuere Listen noch nicht (Europa:
+// Meere, Inseln, Klima …). Wo das Set es erlaubt, kommen fehlende Listen aus
+// dem eingebauten Stoff; was gespeichert ist, bleibt, wie es ist.
+function stoffErgaenzen(stoff) {
+  if (!SET.stoffErgaenzen || !stoff || typeof stoff !== 'object') return stoff;
+  const ergaenzt = { ...stoff };
+  for (const [k, v] of Object.entries(SET.stoff)) if (!(k in ergaenzt)) ergaenzt[k] = v;
+  return ergaenzt;
 }
 
 /* ══ Geometrie ═══════════════════════════════════════════════════════════ */
@@ -1143,7 +1153,7 @@ $('#stoff-speichern').addEventListener('click', () => {
   try { localStorage.setItem(SET.speicher.stoff, JSON.stringify(neu)); }
   catch (e) { return meldung('Speichern fehlgeschlagen: ' + e.message, false); }
 
-  STOFF = neu;
+  STOFF = stoffErgaenzen(neu);
   THEMEN = themenFiltern(SET.themen(STOFF));
   stoffDialog.close();
   homeZeigen();
