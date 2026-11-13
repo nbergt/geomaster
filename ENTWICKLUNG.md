@@ -25,6 +25,27 @@ Die Generatoren verwenden ihre Pakete aus `tools/node_modules/`.
 Die beiden ursprünglichen Arbeitsblatt-Fotos bleiben lokal und wurden nicht in
 das öffentliche Repository übernommen. Die daraus erfassten Lerndaten sind enthalten.
 
+## Lernstoff aus Fotos (Filter)
+
+Der Benutzer gibt Fotos der Lernkontrolle bzw. der Lernziele. Daraus:
+
+1. Fehlende Einträge in `tools/stoff-eu.mjs` ergänzen (Geometrie in
+   `tools/build-geo-eu.mjs`, Koordinaten über Wikidata), dann die Generatoren
+   in der Reihenfolge aus dem README laufen lassen.
+2. Eine Vorlage in `FILTER` (`tools/stoff-eu.mjs`) anlegen: je Thema `"alle"`
+   oder die Liste der markierten Einträge. `build-data-eu.mjs` und
+   `check.mjs --eu` melden Einträge, die zu nichts passen.
+3. Was auf den Fotos unsicher ist (unleserlich, nicht markiert, nicht in den
+   Quellen), im Bericht nennen.
+
+## Netzwerk in Claude Code im Web
+
+Die Umgebung braucht für die Abrufe die Hosts `query.wikidata.org`,
+`www.wikidata.org` und `geodata.ucdavis.edu` (WorldClim). Node.js nutzt den
+Proxy nur mit `NODE_USE_ENV_PROXY=1`. Chrome für die Browser-Prüfungen läuft
+dort als Root nur mit `--no-sandbox`; dafür ein kleines Startskript als `CHROME`
+angeben, das Chromium mit diesem Schalter aufruft.
+
 ## Browser-Prüfungen
 
 Die Tests verwenden installiertes Chrome im Headless-Modus und Node.js ab Version

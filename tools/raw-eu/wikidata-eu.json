@@ -1,6 +1,6 @@
 {
  "quelle": "Wikidata (CC0)",
- "abgerufen": "2026-10-26",
+ "abgerufen": "2026-11-13",
  "hauptstaedte": [
   {
    "iso": "AD",
@@ -842,6 +842,241 @@
      "einheit": "Q11573",
      "rang": "normal",
      "zeitpunkt": null
+    }
+   ]
+  }
+ ],
+ "orte": [
+  {
+   "name": "Barcelona",
+   "wikidata": "Q1492",
+   "label": "Barcelona",
+   "koord": [
+    {
+     "lon": 2.1769444444444,
+     "lat": 41.3825,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Birmingham",
+   "wikidata": "Q2256",
+   "label": "Birmingham",
+   "koord": [
+    {
+     "lon": -1.9025,
+     "lat": 52.48,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Danzig",
+   "wikidata": "Q1792",
+   "label": "Danzig",
+   "koord": [
+    {
+     "lon": 18.6540233,
+     "lat": 54.3482907,
+     "rang": "preferred"
+    },
+    {
+     "lon": 18.666666666666668,
+     "lat": 54.35,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Hamburg",
+   "wikidata": "Q1055",
+   "label": "Hamburg",
+   "koord": [
+    {
+     "lon": 10,
+     "lat": 53.55,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Istanbul",
+   "wikidata": "Q406",
+   "label": "Istanbul",
+   "koord": [
+    {
+     "lon": 28.960277777778,
+     "lat": 41.01,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Mailand",
+   "wikidata": "Q490",
+   "label": "Mailand",
+   "koord": [
+    {
+     "lon": 9.19,
+     "lat": 45.466944444444,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Marseille",
+   "wikidata": "Q23482",
+   "label": "Marseille",
+   "koord": [
+    {
+     "lon": 5.3763888888889,
+     "lat": 43.296666666667,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Neapel",
+   "wikidata": "Q2634",
+   "label": "Neapel",
+   "koord": [
+    {
+     "lon": 14.248611111111112,
+     "lat": 40.83583333333333,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "St. Petersburg",
+   "wikidata": "Q656",
+   "label": "Sankt Petersburg",
+   "koord": [
+    {
+     "lon": 30.316666666667,
+     "lat": 59.95,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Kiruna",
+   "wikidata": "Q83232",
+   "label": "Kiruna",
+   "koord": [
+    {
+     "lon": 20.302777777777777,
+     "lat": 67.8488888888889,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Archangelsk",
+   "wikidata": "Q1851",
+   "label": "Archangelsk",
+   "koord": [
+    {
+     "lon": 40.5375,
+     "lat": 64.54305555555555,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Tromsø",
+   "wikidata": "Q42328401",
+   "label": "Tromsø",
+   "koord": [
+    {
+     "lon": 18.955555555555556,
+     "lat": 69.65166666666667,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Bergen",
+   "wikidata": "Q26793",
+   "label": "Bergen",
+   "koord": [
+    {
+     "lon": 5.3233333333333,
+     "lat": 60.3925,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Brest",
+   "wikidata": "Q12193",
+   "label": "Brest",
+   "koord": [
+    {
+     "lon": -4.486111111111111,
+     "lat": 48.39055555555556,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Kassel",
+   "wikidata": "Q2865",
+   "label": "Kassel",
+   "koord": [
+    {
+     "lon": 9.4979166666667,
+     "lat": 51.315777777778,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Wolgograd",
+   "wikidata": "Q914",
+   "label": "Wolgograd",
+   "koord": [
+    {
+     "lon": 44.514722222222225,
+     "lat": 48.70861111111111,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Davos",
+   "wikidata": "Q68097",
+   "label": "Davos",
+   "koord": [
+    {
+     "lon": 9.8398333333333,
+     "lat": 46.809055555556,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Jungfraujoch",
+   "wikidata": "Q665676",
+   "label": "Jungfraujoch",
+   "koord": [
+    {
+     "lon": 7.9830555555556,
+     "lat": 46.547777777778,
+     "rang": "normal"
+    }
+   ]
+  },
+  {
+   "name": "Hoher Sonnblick",
+   "wikidata": "Q877393",
+   "label": "Hoher Sonnblick",
+   "koord": [
+    {
+     "lon": 12.9575,
+     "lat": 47.053888888889,
+     "rang": "normal"
     }
    ]
   }

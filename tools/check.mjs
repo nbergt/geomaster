@@ -210,7 +210,8 @@ async function euPruefen() {
 
   // Datei
   const kb = Buffer.byteLength(quelltext) / 1024;
-  melde(kb <= 600, `geo-eu.js ist ${kb.toFixed(0)} KB (erlaubt: 600)`);
+  // 600 KB bis 13.11.2026; seither kommen Meere (≈ 30 KB) und Inseln/Halbinseln (≈ 35 KB) dazu.
+  melde(kb <= 650, `geo-eu.js ist ${kb.toFixed(0)} KB (erlaubt: 650)`);
   melde(/^\/\/ AUTOGENERIERT/.test(quelltext), 'geo-eu.js: Kopf «AUTOGENERIERT» fehlt');
 
   // Jedes Land der CSV hat eine Fläche oder einen Punkt; Ausgeschlossene fehlen.
@@ -228,7 +229,8 @@ async function euPruefen() {
 
   // Pfade nur aus M/L/Z, Anker und Punkte im Bild.
   const imBild = ([x, y]) => x >= 0 && x <= G.width && y >= 0 && y <= G.height;
-  for (const [art, liste] of [['countries', G.countries], ['rivers', G.rivers], ['ranges', G.ranges]]) {
+  for (const [art, liste] of [['countries', G.countries], ['rivers', G.rivers], ['ranges', G.ranges],
+    ['meere', G.meere || []], ['inseln', G.inseln || []]]) {
     for (const o of liste) {
       const name = o.iso || o.name;
       melde(/^(M[-\d. L]+Z?)+$/.test(o.d), `${art} ${name}: Pfad nicht nur aus M/L/Z`);
@@ -236,6 +238,12 @@ async function euPruefen() {
     }
   }
   for (const k of G.kleinstaaten) melde(imBild(G.project(k.lon, k.lat)), `Kleinstaat ${k.iso} ausserhalb der Karte`);
+  for (const m of G.meerengen || []) melde(imBild(G.project(m.lon, m.lat)), `Meerenge ${m.name} ausserhalb der Karte`);
+  // Stichproben: Meerengen liegen dort, wo sie hingehören (± 0.5°).
+  for (const [name, lon, lat] of [['Bosporus', 29.05, 41.1], ['Strasse von Gibraltar', -5.6, 36.0]]) {
+    const m = (G.meerengen || []).find(x => x.name === name);
+    melde(m && Math.abs(m.lon - lon) < 0.5 && Math.abs(m.lat - lat) < 0.5, `Meerenge ${name}: ${m ? `${m.lon}/${m.lat}` : 'fehlt'}`);
+  }
   for (const s of ['country', 'umgebung']) melde(/^(M[-\d. L]+Z)+$/.test(G[s]), `${s}: Pfad nicht nur aus M/L/Z`);
 
   // Krim gehört zur Ukraine (Natural Earth, Sichtweise Deutschland).
@@ -284,6 +292,17 @@ async function euPruefen() {
   // geo-Verweise
   for (const f of D.fluesse) melde(G.rivers.some(r => r.name === f.geo), `Fluss ${f.name}: geo «${f.geo}» fehlt in geo-eu.js`);
   for (const g of D.gebirge) melde(G.ranges.some(r => r.name === g.geo), `Gebirge ${g.name}: geo «${g.geo}» fehlt in geo-eu.js`);
+  for (const m of D.meere || []) {
+    melde(m.meerenge ? (G.meerengen || []).some(x => x.name === m.name) : (G.meere || []).some(x => x.name === m.geo),
+      `Meer ${m.name}: fehlt in geo-eu.js`);
+  }
+  for (const i of D.inseln || []) melde((G.inseln || []).some(x => x.name === i.geo), `Insel ${i.name}: geo «${i.geo}» fehlt in geo-eu.js`);
+  // Stichproben: Insel bzw. Halbinsel enthält einen bekannten Ort.
+  for (const [name, lon, lat] of [['Sizilien', 14.0, 37.5], ['Kreta', 24.9, 35.2], ['Krim', 34.1, 45.0], ['Island', -19, 64.8],
+    ['Iberische Halbinsel', -4, 40], ['Skandinavien', 15, 63], ['Peloponnes', 22.2, 37.5]]) {
+    const i = (G.inseln || []).find(x => x.name === name);
+    melde(i && inPfad(G.project(lon, lat), i.d), `${name} enthält ${lon}/${lat} nicht`);
+  }
 
   // Koordinaten im Bild; Hauptstadt im eigenen Land, Gipfel in einem seiner Länder.
   const kmZw = (a, b) => {
@@ -326,6 +345,18 @@ async function euPruefen() {
       if (km > 0 && km <= 2) hinweise.push(`Hauptstadt ${h.name} liegt ${km.toFixed(1)} km neben der vereinfachten Fläche von ${land.name} (Küstenlinie)`);
     }
   }
+  for (const o of D.staedte || []) {
+    melde(imBild(G.project(o.lon, o.lat)), `Stadt ${o.name}: ausserhalb der Karte`);
+    const km = kmZumLand([o.lon, o.lat], o.land);
+    melde(km <= 5, `Stadt ${o.name} liegt ${km.toFixed(1)} km ausserhalb von ${o.land}`);
+  }
+  for (const o of D.klimaorte || []) {
+    melde(imBild(G.project(o.lon, o.lat)), `Klimaort ${o.name}: ausserhalb der Karte`);
+    if (G.countries.some(c => c.iso === o.land)) {
+      const km = kmZumLand([o.lon, o.lat], o.land);
+      melde(km <= 5, `Klimaort ${o.name} liegt ${km.toFixed(1)} km ausserhalb von ${o.land}`);
+    }
+  }
   for (const g of D.gipfel) {
     melde(imBild(G.project(g.lon, g.lat)), `Gipfel ${g.name}: ausserhalb der Karte`);
     const km = Math.min(...g.land.map(iso => kmZumLand([g.lon, g.lat], iso)));
@@ -341,6 +372,10 @@ async function euPruefen() {
     'Flüsse': D.fluesse.map(f => [f.name, ...(f.alias || [])]),
     'Gebirge': D.gebirge.map(g => [g.name, ...(g.alias || [])]),
     'Gipfel': D.gipfel.map(g => [g.name, ...(g.alias || [])]),
+    'Meere': (D.meere || []).map(m => [m.name, ...(m.alias || [])]),
+    'Inseln': (D.inseln || []).map(i => [i.name, ...(i.alias || [])]),
+    'Städte': [...D.laender.map(l => [l.hauptstadt, ...(l.hauptstadtAlias || [])]), ...(D.staedte || []).map(o => [o.name, ...(o.alias || [])])],
+    'Klimazonen': (D.klimazonen || []).map(z => [z.name, ...(z.alias || [])]),
   };
   const lev = (a, b) => {
     let v = Array.from({ length: b.length + 1 }, (_, i) => i);
@@ -378,6 +413,36 @@ async function euPruefen() {
     melde(!stoffJson.includes(name), `«${name}» kommt im Stoff vor (ausgeschlossen)`);
   }
 
+  /* ── Klima (js/klima-eu.js) ── */
+  const klimaText = readFileSync(join(WURZEL, 'js', 'klima-eu.js'), 'utf8');
+  vm.runInContext(klimaText + '\nthis.KLIMA_EU = KLIMA_EU;', ctx, { filename: 'js/klima-eu.js' });
+  const K = ctx.KLIMA_EU;
+  const klimaKb = Buffer.byteLength(klimaText) / 1024;
+  melde(/^\/\/ AUTOGENERIERT/.test(klimaText), 'klima-eu.js: Kopf «AUTOGENERIERT» fehlt');
+  melde(klimaKb <= 250, `klima-eu.js ist ${klimaKb.toFixed(0)} KB (erlaubt: 250)`);
+  for (const z of D.klimazonen || []) {
+    const f = K.zonen.find(x => x.key === z.key);
+    melde(f && /^(M[-\d. L]+Z)+$/.test(f.d) && imBild(f.a), `Klimazone ${z.key}: Fläche oder Anker fehlt`);
+  }
+  for (const o of D.klimaorte || []) {
+    const w = K.orte[o.name];
+    melde(w && w.t.length === 12 && w.n.length === 12, `Klimaort ${o.name}: Monatswerte fehlen`);
+    if (!w) continue;
+    melde(w.t.every(v => v > -30 && v < 35) && w.n.every(v => v >= 0 && v < 600), `Klimaort ${o.name}: Werte unplausibel`);
+    const z = K.zonen.find(x => x.key === o.zone);
+    if (z) {
+      const p = G.project(o.lon, o.lat);
+      // Der Ort liegt in seiner Zone; an Küsten und Zonengrenzen höchstens einen Hinweis wert.
+      if (!inPfad(p, z.d)) hinweise.push(`Klimaort ${o.name} liegt knapp ausserhalb der Fläche «${o.zone}» (Rand oder Küste)`);
+    }
+  }
+  // Stichproben gegen die Zonenkarte (Lehrmittel): London ozeanisch, Moskau kontinental, Rom Mittelmeer.
+  for (const [ort, lon, lat, key] of [['London', -0.13, 51.5, 'ozeanisch'], ['Moskau', 37.6, 55.75, 'kontinental'],
+    ['Rom', 12.5, 41.9, 'mittelmeer'], ['Kiruna', 20.2, 67.85, 'nordeuropaeisch'], ['Kassel', 9.5, 51.3, 'uebergang']]) {
+    const z = K.zonen.find(x => x.key === key);
+    melde(z && inPfad(G.project(lon, lat), z.d), `${ort} liegt nicht in der Klimazone ${key}`);
+  }
+
   /* ── Themen der App (SETS.eu, wie im Browser geladen) ── */
   const { ctx: appCtx } = appLaden();
   const T = vm.runInContext(`typeof SETS !== 'undefined' && SETS.eu ? SETS.eu.themen(DATA_EU) : null`, appCtx);
@@ -388,9 +453,23 @@ async function euPruefen() {
       const ok = z.typ === 'punkt' ? imBild(G.project(z.lon, z.lat))
         : z.typ === 'staat' ? G.countries.some(c => c.iso === z.id)
         : z.typ === 'fluss' ? G.rivers.some(r => r.name === z.id)
-        : z.typ === 'gebirge' ? G.ranges.some(r => r.name === z.id) : false;
+        : z.typ === 'gebirge' ? G.ranges.some(r => r.name === z.id)
+        : z.typ === 'meerflaeche' ? (G.meere || []).some(r => r.name === z.id)
+        : z.typ === 'insel' ? (G.inseln || []).some(r => r.name === z.id)
+        : z.typ === 'klimazone' ? K.zonen.some(r => r.key === z.id) : false;
       melde(ok, `Thema ${t.id}, ${it.name}: Ziel ${JSON.stringify(z)} fehlt auf der Karte`);
       melde(it.frage && !/undefined|null/.test(it.frage + it.frageAlt), `Thema ${t.id}, ${it.name}: Fragetext «${it.frage}»`);
+    }
+  }
+  // Filter-Vorlagen: jedes Thema existiert, jeder Eintrag trifft ein Item (wie filterTrifft in app.js).
+  for (const f of D.filter || []) {
+    for (const [id, wahl] of Object.entries(f.themen)) {
+      const t = (T || []).find(x => x.id === id);
+      melde(t, `Filter ${f.id}: Thema ${id} gibt es nicht`);
+      if (!t || wahl === 'alle') continue;
+      for (const e of wahl) {
+        melde(t.items.some(it => [it.key, it.name, it.etikett].some(w => w != null && norm(w) === norm(e))), `Filter ${f.id}, ${id}: «${e}» trifft nichts`);
+      }
     }
   }
 
@@ -431,7 +510,9 @@ async function euPruefen() {
     return false;
   }
   console.log(`EU: OK  (geo-eu.js ${kb.toFixed(0)} KB, ${G.countries.length} Länder, ${G.kleinstaaten.length} Kleinstaaten-Punkte, ` +
-    `${G.rivers.length} Flüsse, ${G.ranges.length} Gebirge; Hin-und-zurück ${maxRund.toExponential(1)}°, gegen d3 ${maxD3.toExponential(1)}°)`);
+    `${G.rivers.length} Flüsse, ${G.ranges.length} Gebirge, ${(G.meere || []).length} Meere, ${(G.meerengen || []).length} Meerengen, ` +
+    `${(G.inseln || []).length} Inseln/Halbinseln, ${(D.staedte || []).length} weitere Städte, ${K.zonen.length} Klimazonen, ` +
+    `${Object.keys(K.orte).length} Klimadiagramme, ${(D.filter || []).length} Filter; klima-eu.js ${klimaKb.toFixed(0)} KB; Hin-und-zurück ${maxRund.toExponential(1)}°, gegen d3 ${maxD3.toExponential(1)}°)`);
   return true;
 }
 

@@ -6,12 +6,13 @@
 // Hauptstädte: Land über den ISO-Code (P297), Hauptstadt (P36, ohne Enddatum
 // und ohne «deprecated»), Koordinaten (P625). Gipfel: die Objekte aus
 // tools/stoff-eu.mjs, Koordinaten (P625) und alle Höhenangaben (P2044) mit Rang.
+// Weitere Orte: STAEDTE und KLIMAORTE mit `wikidata` aus tools/stoff-eu.mjs, Koordinaten (P625).
 // Bei einem Fehler wird nichts geschrieben.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { laenderLaden } from './lib/laender.mjs';
-import { GIPFEL } from './stoff-eu.mjs';
+import { GIPFEL, STAEDTE, KLIMAORTE } from './stoff-eu.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(HERE, 'raw-eu', 'wikidata-eu.json');
@@ -82,8 +83,23 @@ const gipfel = GIPFEL.map(g => {
   };
 });
 
+// --- weitere Orte (Städte, Klimadiagramm-Orte) ------------------------------
+const ORTE = [...STAEDTE, ...KLIMAORTE.filter(o => o.wikidata)];
+const sIds = ORTE.map(s => s.wikidata);
+if (sIds.some(x => !/^Q\d+$/.test(x || ''))) throw new Error('Ort ohne gültige Wikidata-ID in tools/stoff-eu.mjs');
+const sEnt = await holen(`https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&props=claims|labels&languages=de|en&ids=${sIds.join('|')}`);
+const orte = ORTE.map(s => {
+  const e = sEnt.entities[s.wikidata];
+  if (!e || e.missing !== undefined) throw new Error(`Wikidata ${s.wikidata} (${s.name}) nicht gefunden`);
+  const koord = (e.claims?.P625 || []).filter(a => a.rank !== 'deprecated').map(a => ({
+    lon: a.mainsnak.datavalue?.value.longitude, lat: a.mainsnak.datavalue?.value.latitude, rang: a.rank,
+  }));
+  return { name: s.name, wikidata: s.wikidata, label: e.labels?.de?.value ?? e.labels?.en?.value ?? null, koord };
+});
+
 // --- prüfen und schreiben --------------------------------------------------
 const fehler = [];
+for (const s of orte) if (!s.koord.length) fehler.push(`${s.name}: keine Koordinaten`);
 for (const l of laender) {
   if (!hauptstaedte.some(h => h.iso === l.iso && h.coord)) fehler.push(`${l.iso}: keine Hauptstadt mit Koordinaten`);
 }
@@ -96,6 +112,6 @@ if (fehler.length) {
   process.exit(1);
 }
 
-const daten = { quelle: 'Wikidata (CC0)', abgerufen: new Date().toISOString().slice(0, 10), hauptstaedte, gipfel };
+const daten = { quelle: 'Wikidata (CC0)', abgerufen: new Date().toISOString().slice(0, 10), hauptstaedte, gipfel, orte };
 fs.writeFileSync(OUT, JSON.stringify(daten, null, 1) + '\n');
-console.log(`geschrieben: ${OUT}  (${hauptstaedte.length} Hauptstadt-Einträge, ${gipfel.length} Gipfel)`);
+console.log(`geschrieben: ${OUT}  (${hauptstaedte.length} Hauptstadt-Einträge, ${gipfel.length} Gipfel, ${orte.length} weitere Orte)`);

@@ -11,8 +11,33 @@ Schwierigkeitsstufen. Zwei Karten, auf der Startseite umschaltbar:
 
 - **Schweiz** (Blatt 1): Kantone, Autokennzeichen, Wappen, Hauptorte, weitere
   Orte, Seen, Flüsse, Gebirge und Pässe.
-- **Europa** (Blatt 2): Länder, Hauptstädte, Flaggen, internationale
-  Autokennzeichen, Flüsse, Gebirge und Gipfel.
+- **Europa** (Blatt 2): Länder, Hauptstädte, Städte, Flaggen, internationale
+  Autokennzeichen, Flüsse, Gebirge, Gipfel, Meere und Meerengen, Inseln und
+  Halbinseln, Klimazonen und Klimadiagramme.
+
+## Lernstoff auswählen (Filter, nur Europa)
+
+Auf der Startseite unter **Lernstoff** wählen, was abgefragt wird: *Alle
+Inhalte*, eine Vorlage (z. B. *Test Europa (16.11.2026)*) oder ein eigener
+Filter. **Anpassen** öffnet eine Häkchenliste je Thema; Änderungen an einer
+Vorlage werden als eigener Filter gespeichert. Unter *Als Text* lässt sich ein
+Filter als JSON einfügen oder kopieren:
+
+```json
+{ "name": "Test Europa", "themen": { "laender": "alle", "fluesse": ["Rhein", "Donau"], "klimadiagramme": "alle" } }
+```
+
+Themen-IDs: `laender`, `hauptstaedte`, `staedte`, `flaggen`, `kennzeichen`,
+`fluesse`, `gebirge`, `gipfel`, `meere`, `inseln`, `klimazonen`,
+`klimadiagramme`. Einträge sind Namen oder Schlüssel (ISO-Code bei Ländern).
+Fehlende Themen sind ausgeblendet. Der Lernfortschritt bleibt beim Wechsel des
+Filters erhalten. Eigene Filter liegen im Browser unter `geomaster.eu.filter.v1`.
+
+**Filter aus Fotos:** Fotos der Lernkontrolle bzw. der Lernziele an Claude
+(Claude Code in diesem Repository) geben. Claude liest die markierten Einträge
+und legt daraus eine Vorlage in `tools/stoff-eu.mjs` (`FILTER`) an oder gibt den
+JSON-Text zum Einfügen aus. Die App selbst liest keine Bilder; sie bleibt
+offline.
 
 ## Starten
 
@@ -38,7 +63,7 @@ Pässe; Europa: Länder, Flüsse, Gebirge, Gipfel):
 | 4 | Umgekehrt: das gesuchte Objekt ist rot markiert — Flächen als Fläche, Flüsse als Linie, Gipfel, Orte und Kleinstaaten als pulsender Punkt — und wird benannt |
 
 Bei Zuordnungsaufgaben (Schweiz: Autokennzeichen, Wappen, Hauptorte; Europa:
-Hauptstädte, Flaggen, Autokennzeichen):
+Hauptstädte, Flaggen, Autokennzeichen, Klimadiagramme):
 
 | Stufe | Aufgabe |
 |---|---|
@@ -75,8 +100,10 @@ Auf der Blanko-Karte (Stufe 3–4) gilt eine Toleranz:
 - **Europa dauerhaft:** `js/data-eu.js` wird erzeugt und nicht von Hand
   geändert. Gepflegt wird in
   - `tools/laender-europa.csv`: Länder, Aliasse, Hauptstädte, Kennzeichen,
-  - `tools/stoff-eu.mjs`: Flüsse, Gebirge, Gipfel (mit Artikel und Aliassen),
-    Artikel der Länder («die Schweiz»), Hinweise zur Hauptstadt.
+  - `tools/stoff-eu.mjs`: Flüsse, Gebirge, Gipfel, Meere, Inseln und
+    Halbinseln, weitere Städte, Klimazonen, Klimadiagramm-Orte (mit Artikel
+    und Aliassen), Artikel der Länder («die Schweiz»), Hinweise zur
+    Hauptstadt, Filter-Vorlagen.
 
   Danach `node tools/build-data-eu.mjs`. Für einen neuen Gipfel zuerst die
   Wikidata-ID in `stoff-eu.mjs` eintragen und `node tools/fetch-wikidata-eu.mjs`
@@ -102,7 +129,12 @@ node tools/build-geo-eu.mjs        # -> js/geo-eu.js      (offline, liest tools/
 node tools/fetch-wikidata-eu.mjs   # -> tools/raw-eu/wikidata-eu.json (Internet: Wikidata)
 node tools/build-data-eu.mjs       # -> js/data-eu.js     (offline)
 node tools/fetch-flaggen.mjs       # -> js/flaggen-eu.js  (Internet: flag-icons)
+node tools/fetch-worldclim-eu.mjs  # -> tools/raw-eu/worldclim-eu.json.gz (Internet: WorldClim)
+node tools/build-klima-eu.mjs      # -> js/klima-eu.js    (offline; nach build-geo-eu und build-data-eu)
 ```
+
+Hinter einem Proxy (z. B. Claude Code im Web) brauchen die Abrufe
+`NODE_USE_ENV_PROXY=1`, sonst ignoriert Node.js die Proxy-Einstellung.
 
 Die Bezugsquellen stehen jeweils oben in den Skripten. Die Europa-Generatoren
 schreiben bei einem Fehler nichts. `tools/vorschau-eu.html` zeigt die
@@ -135,6 +167,19 @@ Europa:
 - Flaggen: flag-icons v7.6.0 (MIT, siehe `LICENSES/flag-icons.txt`)
 - Länderliste, Schreibweisen, Kennzeichen: `tools/laender-europa.csv`
   (Kennzeichen abgeglichen mit de.wikipedia «Liste der Kfz-Nationalitätszeichen»)
+- Meere, Meerengen, Inseln und Halbinseln: Natural Earth (`marine_polys`,
+  `regions_polys`); die Apenninenhalbinsel ist das Festland Italiens aus der
+  Länderfläche, die «Deutschen Mittelgebirge» sind Harz, Erzgebirge und
+  Böhmerwald (Natural Earth hat kein Gesamtobjekt)
+- Weitere Städte und Klimadiagramm-Orte: Koordinaten aus Wikidata (CC0)
+- Klima: WorldClim 2.1, 1970–2000, 10 Bogenminuten (CC BY 4.0, siehe
+  `LICENSES/worldclim.txt`). Die sechs Zonen und ihre Merkmale stammen vom
+  Arbeitsblatt «Klimazonen Europas»; die Grenzwerte, nach denen jede
+  Rasterzelle eingeteilt wird, stehen oben in `tools/build-klima-eu.mjs`.
+  Klimadiagramme zeigen die Werte der Rasterzelle am Ort (rund 18 km),
+  nicht die einer Messstation.
+- Prüfungsstoff Europa: Lernziele «Test Europa 2026», Lernkontrolle (rot
+  markierte Einträge) und Blatt «Klimazonen Europas», Fotos vom 13.11.2026
 
 Georgien, Armenien, Aserbaidschan und Kasachstan sind bewusst nicht im
 Lernstoff; sie erscheinen nur als graue Umgebung.
@@ -150,7 +195,9 @@ js/wappen.js          Kantonswappen als eingebettete Bilder (autogeneriert)
 js/geo-eu.js          Kartengeometrie Europa (autogeneriert)
 js/data-eu.js         Lernstoff Europa (autogeneriert aus CSV und stoff-eu.mjs)
 js/flaggen-eu.js      Flaggen als eingebettete Bilder (autogeneriert)
-js/sets.js            Die beiden Karten: Themen, Texte, Toleranzen, Speicher
+js/klima-eu.js        Klimazonen und Klimadiagramm-Werte (autogeneriert)
+js/klimadiagramm.js   Zeichnet ein Klimadiagramm (Walter/Lieth) als SVG
+js/sets.js            Die beiden Karten: Themen, Texte, Toleranzen, Speicher, Filter
 js/app.js             Spiellogik
 LICENSES/             Lizenztexte
 tools/                Build- und Prüfskripte, Rohdaten
