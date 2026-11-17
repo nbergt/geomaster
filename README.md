@@ -29,9 +29,17 @@ Gleichstand die kürzere Gesamtzeit. Beliebig viele Spieler sind möglich, zum
 Beispiel eine ganze WhatsApp-Gruppe. Unter **Duell** stehen auch der Verlauf
 und die Ranglisten aller Duelle auf diesem Gerät.
 
-So funktioniert es ohne Server: Duell und Ergebnis stecken vollständig im Link
-(hinter dem `#`, das nie an einen Server geht). Rangliste und Verlauf liegen
-nur im Browser unter `geomaster.duell.v1`. Wer online ist, lässt sich so nicht
+Jedes Duell lässt sich pro Gerät und Nickname nur einmal spielen; wer
+abbricht, hat 0 richtig mit voller Zeit. Geschwister auf demselben Gerät
+spielen unter einem anderen Nickname mit. In der installierten App (vor allem
+auf dem iPhone öffnen Links Safari statt der App) lässt sich ein Link unter
+**Duell → Link bekommen?** einfügen.
+
+So funktioniert es ohne eigenen Server: Duell und Ergebnis stecken vollständig
+im Link (hinter dem `#`, das beim Öffnen nicht an GitHub Pages geht). Beim
+Teilen über WhatsApp sieht WhatsApp den Link aber, also Nicknames, Punkte und
+Zeit, deshalb nur Spitznamen verwenden. Rangliste und Verlauf liegen nur im
+Browser unter `geomaster.duell.v1`. Wer online ist, lässt sich so nicht
 anzeigen, und gefälschte Ergebnis-Links sind möglich. Duelle zählen nicht zum
 Lernfortschritt und verwenden immer den eingebauten Stoff (ein eigener Filter
 bestimmt nur, aus welchen Einträgen der Ersteller die 10 Fragen zieht).
@@ -232,6 +240,7 @@ js/klima-eu.js        Klimazonen und Klimadiagramm-Werte (autogeneriert)
 js/klimadiagramm.js   Zeichnet ein Klimadiagramm (Walter/Lieth) als SVG
 js/sets.js            Die beiden Karten: Themen, Texte, Toleranzen, Speicher, Filter
 js/app.js             Spiellogik
+js/duell.js           Duell-Modus: Links, Countdown, Rangliste, Verlauf
 js/pwa.js             Installierbar machen (Manifest, Service Worker, Knopf), nur über http(s)
 manifest.webmanifest  App-Manifest (Name, Farben, Icons)
 sw.js                 Service Worker: offline nutzbar; DATEIEN muss jede App-Datei enthalten

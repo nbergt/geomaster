@@ -2,7 +2,7 @@
 // Mehrere «Geräte» werden nachgestellt, indem der Speicher geleert und der
 // Duell-Link neu geöffnet wird. Ohne festen Zufall: gleiche Fragen und
 // Antworten dürfen nur aus dem Duell-Link kommen, nicht aus Math.random.
-// Aufruf: node tools/browser/duell.mjs [ordner]
+// Aufruf: node tools/browser/duell.mjs [ordner]   (Port: DUELL_PORT, Standard 9334)
 import { join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { chromeStarten, sleep } from './cdp.mjs';
@@ -10,7 +10,7 @@ import { chromeStarten, sleep } from './cdp.mjs';
 const ORDNER = resolve(process.argv[2] || join(fileURLToPath(import.meta.url), '..', '..', '..'));
 const SEITE = pathToFileURL(join(ORDNER, 'index.html')).href;
 
-const b = await chromeStarten({ port: 9334 });
+const b = await chromeStarten({ port: Number(process.env.DUELL_PORT) || 9334 });
 await b.cdp('Page.addScriptToEvaluateOnNewDocument', { source: 'window.confirm = () => true;' });
 
 let fehlschlaege = 0;
@@ -21,7 +21,8 @@ function pruefe(name, ok, info = '') {
 
 // ── Hilfen in der Seite ──────────────────────────────────────────────────
 const q = s => JSON.stringify(s);
-const da = sel => b.js(`!!document.querySelector(${q(sel)}) && !document.querySelector(${q(sel)}).closest('[hidden]')`);
+// Sichtbar (auch nicht in einem zugeklappten <details>)?
+const da = sel => b.js(`!!document.querySelector(${q(sel)})?.checkVisibility()`);
 const text = sel => b.js(`document.querySelector(${q(sel)})?.textContent ?? null`);
 const wert = sel => b.js(`document.querySelector(${q(sel)})?.value ?? null`);
 const klicke = sel => b.js(`document.querySelector(${q(sel)}).click()`);
@@ -37,7 +38,7 @@ const hashVon = link => link.slice(link.indexOf('#'));
 async function oeffne(hash) {
   await b.laden('about:blank');
   await b.laden(SEITE + hash);
-  await sleep(100);
+  await sleep(150);
 }
 
 // Neues «Gerät»: Speicher leeren, Seite (optional mit Link-Hash) frisch laden.
@@ -46,7 +47,7 @@ async function geraet(hash = '', vorher = null) {
   await b.js(`localStorage.clear(); ${vorher ? `for (const [k, v] of Object.entries(${JSON.stringify(vorher)})) localStorage.setItem(k, v);` : ''}`);
   await b.laden('about:blank');
   await b.laden(SEITE + hash);
-  await sleep(100);
+  await sleep(150);
 }
 
 // Eine Duell-Runde spielen. antworten(i) liefert 'erste' (erste Auswahl),
@@ -65,9 +66,11 @@ async function spielen(antworten) {
       await b.js(`document.querySelector('#antwortfeld .wahl').click()`);
     }
     zug.rueck = await text('#rueck-text');
+    zug.uhrNach = await text('#duell-uhr');
     zug.rueckSichtbar = await da('#rueckmeldung');
+    if (antworten(i) === 'warten') await sleep(850);   // nach Zeitablauf ist «Weiter» kurz gesperrt
     await klicke('#weiter');
-    await sleep(30);
+    await sleep(60);
   }
   return protokoll;
 }
@@ -131,8 +134,8 @@ try {
   pruefe('K2: Zeitablauf zählt als falsch', String(benZuege[0].rueck).startsWith('✗'), String(benZuege[0].rueck));
   const benEigen = await b.js(`(() => { const d = Object.values(JSON.parse(localStorage.getItem('geomaster.duell.v1')).duelle)[0];
     return d.ergebnisse.find(e => e.n === 'Ben'); })()`);
-  pruefe('K2: abgelaufene Frage zählt 10 s', benEigen && benEigen.z >= 100 && benEigen.z < 130, JSON.stringify(benEigen));
-  const benErgebnis = await wert('#duell-ergebnis-link');
+  pruefe('K2: abgelaufene Frage zählt genau 10,0 s', benZuege[0].uhrNach?.trim() === '10,0 s', String(benZuege[0].uhrNach));
+  pruefe('K2: Gesamtzeit enthält die vollen 10 s', benEigen && benEigen.z >= 100 && benEigen.z < 130, JSON.stringify(benEigen));
 
   // Annas Ergebnis-Link bei Ben öffnen, zweimal.
   await oeffne(hashVon(annaErgebnis));
@@ -157,6 +160,24 @@ try {
   pruefe('Fremder Nickname wird nicht als HTML eingefügt',
     await b.js(`!document.querySelector('#duell-rangliste img') && !window.boese`));
 
+  // Ergebnis-Link mit bekannter ID, aber anderen Fragen: abgelehnt.
+  const fremdD = await b.js(`(() => { const e = duellLesen(${q(hashVon(annaErgebnis))}).ergebnis;
+    return duellLinkBauen('ergebnis', { ...e, d: { ...e.d, l: 4 }, n: 'Mallory', r: 10 }); })()`);
+  await oeffne(hashVon(fremdD));
+  pruefe('Ergebnis zu verändertem Duell wird abgelehnt', (await text('#duell-meldung'))?.length > 0 &&
+    !(await b.js(`localStorage.getItem('geomaster.duell.v1').includes('Mallory')`)));
+
+  // Duell-ID «constructor» und unsichtbarer Nickname: kein Absturz, sauber behandelt.
+  const proto = await b.js(`(() => { const d = duellLesen(${q(hashVon(link))}).duell;
+    return duellLinkBauen('duell', { ...d, i: 'constructor' }); })()`);
+  await oeffne(hashVon(proto));
+  pruefe('Duell-ID «constructor» funktioniert', await da('#duell-rangliste') || await da('#duell-start'));
+  pruefe('Duell-ID «constructor» verändert Object nicht', await b.js(`typeof Object.zuletzt === 'undefined'`));
+  const leer = await b.js(`(() => { const d = duellLesen(${q(hashVon(link))}).duell;
+    return duellLinkBauen('duell', { ...d, i: 'leername1', n: String.fromCharCode(0x3164, 0x200b) }); })()`);
+  await oeffne(hashVon(leer));
+  pruefe('Unsichtbarer Nickname wird abgelehnt', (await text('#duell-meldung'))?.includes('beschädigt'), await text('#duell-meldung'));
+
   // ── K6: Duell mit unbekannten Einträgen ───────────────────────────────
   const kaputt = await b.js(`(() => { const d = duellLesen(${q(hashVon(link))}).duell;
     return duellLinkBauen('duell', { ...d, i: 'kaputt01', k: ['XX', 'YY'] }); })()`);
@@ -177,16 +198,40 @@ try {
   await klicke('#duell-erstellen');
   await klicke('#duell-spielen');
   pruefe('Tippaufgabe: Countdown 20 s', (await text('#duell-uhr'))?.trim().startsWith('20'), await text('#duell-uhr'));
-  await b.js(`document.querySelector('#nach-hause').click()`);
-  pruefe('Abbruch: Uhr stoppt, Startseite', await da('#home'));
-
-  // ── K7 auf Gerät B und Netzwerk ──────────────────────────────────────
-  pruefe('K7: kein Lernfortschritt geschrieben (Gerät C)',
+  // Eine Frage beantworten, dann abbrechen.
+  await b.js(`document.querySelector('.tippfeld input').value = 'Bern'; document.querySelector('.tippfeld .knopf').click()`);
+  pruefe('K7: Tippantwort im Duell schreibt keinen Lernfortschritt',
     !Object.keys(await speicher()).some(k => k.includes('fortschritt')));
+  await klicke('#weiter');
+  await b.js(`document.querySelector('#nach-hause').click()`);
+  pruefe('Abbruch: Startseite, Uhr ausgeblendet', await da('#home') && !(await da('#duell-uhr')));
+  await sleep(300);
+  pruefe('Abbruch: kein Fehler durch weiterlaufende Uhr', b.fehler.length === 0, b.fehler.join(' | '));
+  // Nach Abbruch: nicht nochmal spielbar, zählt 0 richtig mit voller Zeit.
+  await klicke('#duell-oeffnen');
+  await klicke('#duell-verlauf .duell-verlauf-eintrag');
+  pruefe('Abbruch: Duell nicht nochmal startbar', await da('#duell-rangliste') && !(await da('#duell-start')));
+  pruefe('Abbruch: zählt 0 richtig, volle Zeit', (await text('#duell-rangliste'))?.includes('0/10'), await text('#duell-rangliste'));
+
+  // ── Gleicher Nickname wie ein fremdes Ergebnis ───────────────────────
+  await geraet(hashVon(annaErgebnis));
+  await setze('#duell-nick', 'anna');
+  await klicke('#duell-start');
+  pruefe('Vergebener Nickname: kein Start', !(await da('#quiz')));
+  pruefe('Vergebener Nickname: Hinweis', (await text('#duell-ich'))?.includes('schon mit') ||
+    (await text('.duell-ich'))?.includes('schon mit'), await text('.duell-ich'));
+
+  // ── Antwort nach Ablauf (Handy ruckelt): zählt als abgelaufen ─────────
+  await setze('#duell-nick', 'Gina');
+  await klicke('#duell-start');
+  const spaet = await b.js(`(() => { const t = performance.now(); while (performance.now() - t < 10300) {}
+    document.querySelector('#antwortfeld .wahl').click();
+    return document.querySelector('#rueck-text').textContent; })()`);
+  pruefe('Antwort nach Ablauf zählt als falsch', spaet.startsWith('✗') && spaet.includes('Zeit abgelaufen'), spaet);
+  await b.js(`document.querySelector('#nach-hause').click()`);
   pruefe('Keine Laufzeitfehler', b.fehler.length === 0, b.fehler.join(' | '));
   const fremd = b.netz.filter(u => !u.startsWith('file:') && !u.startsWith('data:') && u !== 'about:blank');
   pruefe('Nur file:// und data: geladen', fremd.length === 0, fremd.join(', '));
-  void benErgebnis;
 } catch (e) {
   fehlschlaege++;
   console.log('FEHL Abbruch: ' + e.message);

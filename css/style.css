@@ -1248,10 +1248,11 @@ dialog { border-radius: 14px; border-color: var(--kontur-zart); box-shadow: 0 24
 .duell-uhr {
   --rest: 1;
   flex: none;
-  min-width: 3.4em;
-  padding: 4px 8px 6px;
+  min-width: 3.6em;
+  padding: 6px 10px 10px;
+  font-size: 20px;
   border-radius: 2px;
-  background: linear-gradient(to right, var(--wald) calc(var(--rest) * 100%), transparent 0) bottom / 100% 4px no-repeat, var(--papier);
+  background: linear-gradient(to right, var(--wald) calc(var(--rest) * 100%), transparent 0) bottom / 100% 6px no-repeat, var(--papier);
   font-family: var(--schrift-karte);
   font-weight: var(--fett);
   font-variant-numeric: tabular-nums;
@@ -1259,5 +1260,12 @@ dialog { border-radius: 14px; border-color: var(--kontur-zart); box-shadow: 0 24
 }
 .duell-uhr.knapp {
   color: var(--signal);
-  background: linear-gradient(to right, var(--signal) calc(var(--rest) * 100%), transparent 0) bottom / 100% 4px no-repeat, var(--papier);
+  background: linear-gradient(to right, var(--signal) calc(var(--rest) * 100%), transparent 0) bottom / 100% 6px no-repeat, var(--papier);
 }
+.duell-uhr.vorbei { color: var(--tinte-matt); background: var(--papier); }
+
+.duell-anderer summary { cursor: pointer; font-family: var(--schrift-karte); color: var(--tinte-matt); min-height: 32px; }
+.duell-anderer[open] { display: grid; gap: 10px; }
+.duell-anderer > .knopf { justify-self: start; }
+.duell-inhalt > .knopf-schlicht { justify-self: start; }
+.duell-kopf h1:focus { outline: none; }

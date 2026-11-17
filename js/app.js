@@ -816,8 +816,13 @@ function aufloesungZeichnen(pt, item, richtig) {
 
 function antwortVerbuchen(richtig, text, item, notiz) {
   lauf.offen = false;
-  if (lauf.duell) duellAntwort();            // Duelle zählen nicht zum Lernfortschritt
-  else fortschrittMerken(lauf.thema, item, lauf.stufe, richtig);
+  if (!lauf.duell) fortschrittMerken(lauf.thema, item, lauf.stufe, richtig);
+  // Duell (js/duell.js): kein Lernfortschritt; zu späte Antwort zählt als abgelaufen.
+  else if (duellAntwort()) {
+    richtig = false;
+    text = `Zeit abgelaufen — richtig ist ${item.name}.`;
+    notiz = 'Zeit abgelaufen';
+  }
   lauf.protokoll.push({ item, richtig, notiz });
 
   const rueck = $('#rueckmeldung');
