@@ -33,7 +33,8 @@ Jedes Duell lässt sich pro Gerät und Nickname nur einmal spielen; wer
 abbricht, hat 0 richtig mit voller Zeit. Geschwister auf demselben Gerät
 spielen unter einem anderen Nickname mit. In der installierten App (vor allem
 auf dem iPhone öffnen Links Safari statt der App) lässt sich ein Link unter
-**Duell → Link bekommen?** einfügen.
+**Duell → Link bekommen?** einfügen. Safari und die installierte App haben
+auf dem iPhone getrennte Speicher; «einmal pro Gerät» gilt dort je für sich.
 
 So funktioniert es ohne eigenen Server: Duell und Ergebnis stecken vollständig
 im Link (hinter dem `#`, das beim Öffnen nicht an GitHub Pages geht). Beim

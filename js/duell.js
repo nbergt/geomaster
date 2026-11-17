@@ -57,7 +57,18 @@ function duellSpeichern() {
   catch { /* Speicher voll oder gesperrt: gilt nur für diese Sitzung */ }
 }
 
-const duellEintrag = id => (Object.hasOwn(DUELL.duelle, id) ? DUELL.duelle[id] : null);
+// Ohne Object.hasOwn und .at(): läuft auch auf älteren iPads (Safari < 15.4).
+const hatEigen = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+const duellEintrag = id => (hatEigen(DUELL.duelle, id) ? DUELL.duelle[id] : null);
+
+// Ein zweiter Tab kann inzwischen gespeichert haben: vor jeder Änderung den
+// Stand neu lesen, damit nichts überschrieben oder doppelt gespielt wird.
+function duellNeuLesen() {
+  const frisch = duellSpeicherLaden();
+  DUELL.nick = frisch.nick;
+  DUELL.duelle = frisch.duelle;
+  DUELL.gespielt = frisch.gespielt;
+}
 
 /* ══ Prüfen fremder Daten ════════════════════════════════════════════════
    Alles aus einem Link ist fremd: Typen, Längen und Wertebereiche werden
@@ -76,10 +87,17 @@ function nickBereinigen(s, kuerzen = true) {
     .replace(/\p{Cf}/gu, c => (c === ZWJ ? c : ''))
     .replace(/./gu, c => (NICK_FUELLER.has(c) ? '' : c))
     .replace(/\s+/gu, ' ').trim()
-    .replace(/^\p{M}+/u, '');
+    .replace(/^\p{M}+/u, '')
+    .replace(/(\p{M}{2})\p{M}+/gu, '$1');          // höchstens zwei Zeichen übereinander
   if (!/[\p{L}\p{N}\p{Extended_Pictographic}]/u.test(sauber)) return '';
-  return kuerzen ? Array.from(sauber).slice(0, NICK_MAX).join('').trim() : sauber;
+  return kuerzen ? zeichenListe(sauber).slice(0, NICK_MAX).join('').trim() : sauber;
 }
+
+// Sichtbare Zeichen (Grapheme): ein Familien-Emoji zählt als eins und wird
+// beim Kürzen nicht zerschnitten. Ohne Intl.Segmenter: Codepunkte.
+const zeichenListe = s => (typeof Intl !== 'undefined' && Intl.Segmenter
+  ? [...new Intl.Segmenter('de', { granularity: 'grapheme' }).segment(s)].map(x => x.segment)
+  : Array.from(s));
 
 // Vergleichsschlüssel: «Anna» und «anna» sind derselbe Spieler.
 const nickSchluessel = n => n.normalize('NFKC').toLocaleLowerCase('de-CH');
@@ -90,7 +108,7 @@ function duellPruefen(d) {
   if (!d || typeof d !== 'object') return null;
   const { v, i, s, t, l, k, z, n } = d;
   if (v !== 1 || typeof i !== 'string' || !/^[a-z0-9]{6,20}$/.test(i)) return null;
-  if (typeof s !== 'string' || !Object.hasOwn(SETS, s)) return null;
+  if (typeof s !== 'string' || !hatEigen(SETS, s)) return null;
   if (typeof t !== 'string' || !/^[a-z0-9_-]{1,40}$/.test(t)) return null;
   if (!duellGanz(l, 1, 4) || !duellGanz(z, 0, 0xffffffff)) return null;
   if (!Array.isArray(k) || k.length < 1 || k.length > DUELL_FRAGEN) return null;
@@ -100,12 +118,20 @@ function duellPruefen(d) {
   if (!nick) return null;
   // Datum nur als Tag; ausserhalb von 2026 bis morgen: unbekannt.
   const datum = Number.isFinite(d.d) && d.d >= DUELL_FRUEHESTENS && d.d <= Date.now() + TAG_MS
-    ? Math.floor(d.d / TAG_MS) * TAG_MS : 0;
+    ? new Date(d.d).setHours(0, 0, 0, 0) : 0;
   return { v: 1, i, s, t, l, k: [...k], z, n: nick, d: datum };
 }
 
 // Höchstzeit in Zehntelsekunden: jede Frage höchstens mit der Tippzeit.
 const duellHoechstzeit = d => d.k.length * DUELL_SEKUNDEN_TIPPEN * 10;
+
+// Sekunden pro Frage in diesem Duell: Tippaufgaben sind «nennen» auf Stufe 3
+// und «karte» auf Stufe 4 (wie in frageZeigen, app.js).
+function duellSekunden(d) {
+  const modus = duellThemen(d.s).find(t => t.id === d.t)?.modus;
+  const tippen = (modus === 'nennen' && d.l === 3) || (modus === 'karte' && d.l === 4);
+  return tippen ? DUELL_SEKUNDEN_TIPPEN : DUELL_SEKUNDEN;
+}
 
 function ergebnisPruefen(e, d) {
   if (!e || typeof e !== 'object') return null;
@@ -166,7 +192,7 @@ function duellLesen(hash) {
 
 const duellThemenCache = Object.create(null);
 function duellThemen(setId) {
-  duellThemenCache[setId] ??= SETS[setId].themen(SETS[setId].stoff);
+  if (!duellThemenCache[setId]) duellThemenCache[setId] = SETS[setId].themen(SETS[setId].stoff);
   return duellThemenCache[setId];
 }
 
@@ -207,6 +233,7 @@ function duellZufallsId() {
 // das erste bleibt. Das eigene Ergebnis ersetzt immer den Eintrag mit
 // gleichem Nickname (es wurde auf diesem Gerät gespielt).
 function duellMerken(d, ergebnis, eigen) {
+  duellNeuLesen();
   let eintrag = duellEintrag(d.i);
   if (!eintrag) eintrag = DUELL.duelle[d.i] = { d, ergebnisse: [], zuletzt: Date.now() };
   eintrag.zuletzt = Date.now();
@@ -243,7 +270,7 @@ function duellRangliste(eintrag) {
 // Das eigene Ergebnis: zum aktuellen Nickname, sonst das letzte auf diesem Gerät.
 function eigenesErgebnis(eintrag) {
   const eigene = eintrag.ergebnisse.filter(e => e.eigen);
-  return eigene.find(e => DUELL.nick && nickSchluessel(e.n) === nickSchluessel(DUELL.nick)) ?? eigene.at(-1);
+  return eigene.find(e => DUELL.nick && nickSchluessel(e.n) === nickSchluessel(DUELL.nick)) ?? eigene[eigene.length - 1];
 }
 
 const duellZeitText = z => `${(z / 10).toFixed(1).replace('.', ',')} s`;
@@ -263,10 +290,11 @@ function duellSpielen(d, nick) {
   if (stoff.fehler) return duellMeldung(stoff.fehler);
   // Schon beim Start als gespielt merken, mit 0 richtig und voller Zeit:
   // Wer abbricht, kann nicht mit bekannten Fragen nochmal anfangen.
+  duellNeuLesen();
   DUELL.gespielt.push(gespieltMarke(d, nick));
-  duellMerken(d, { n: nick, r: 0, z: duellHoechstzeit(d) }, true);
+  duellMerken(d, { n: nick, r: 0, z: d.k.length * duellSekunden(d) * 10 }, true);
   if (SET.id !== d.s) {
-    duellVorherSet ??= SET;
+    if (!duellVorherSet) duellVorherSet = SET;
     setAktivieren(SETS[d.s]);
   }
   // Fragen des eingebauten Stoffs (auch für Karte und Bewertung).
@@ -316,8 +344,17 @@ function duellZeitAbgelaufen() {
   // Wer gerade tippt, soll mit Enter nicht gleich die nächste Frage auslösen.
   const weiter = $('#weiter');
   weiter.disabled = true;
-  setTimeout(() => { weiter.disabled = false; }, 800);
+  setTimeout(() => {
+    weiter.disabled = false;
+    const a = document.activeElement;
+    if (!a || a === document.body || a === weiter) weiter.focus();
+  }, 800);
 }
+
+// Ist die Zeit schon um, obwohl der Ablauf noch nicht gemeldet wurde
+// (Handy ruckelt, App war im Hintergrund)? Für die Antwort-Wege in app.js.
+const duellZuSpaet = () => !!duellUhr && !duellUhr.abgelaufen &&
+  performance.now() - duellUhr.start >= duellUhr.limit * 1000;
 
 // Aufgerufen von antwortVerbuchen() (app.js): Zeit der Frage festhalten.
 // Liefert true, wenn die Antwort erst nach Ablauf kam (Handy ruckelt, App
@@ -391,7 +428,8 @@ const zurStartseite = () => duellKnopf('Zur Startseite', 'knopf-schlicht', () =>
 
 // Nickname-Feld; speichern() liefert den bereinigten Namen oder '' (mit Meldung).
 // pruefen(nick) kann zusätzlich einen Fehlertext liefern (z. B. Name vergeben).
-function nickFeld(pruefen) {
+// merken=false: Name gilt nur für dieses Spiel (Mitspielen unter anderem Namen).
+function nickFeld(pruefen, merken = true) {
   const wrap = el('div', { class: 'duell-nick' });
   const lab = el('label', { for: 'duell-nick' }, 'Dein Nickname');
   const input = el('input', {
@@ -412,8 +450,11 @@ function nickFeld(pruefen) {
     if (problem) return fehler(problem);
     input.value = voll;
     meldung.textContent = '';
-    DUELL.nick = voll;
-    duellSpeichern();
+    if (merken) {
+      duellNeuLesen();
+      DUELL.nick = voll;
+      duellSpeichern();
+    }
     return voll;
   };
   return { wrap, input, speichern };
@@ -488,16 +529,17 @@ function duellUebersicht(neu) {
 function duellStartPruefen(d, nick) {
   const name = nick.speichern();
   if (!name) return;
+  duellNeuLesen();                    // ein anderer Tab hat vielleicht schon gespielt
   if (duellGespielt(d, name)) return duellRanglisteZeigen(duellMerken(d, null, false));
-  const vergeben = duellEintrag(d.i)?.ergebnisse.some(e => !e.eigen && nickSchluessel(e.n) === nickSchluessel(name));
-  if (vergeben) {
-    nick.input.focus();
-    nick.wrap.querySelector('.stoff-meldung').textContent =
-      `«${name}» spielt in diesem Duell schon mit. Wähle einen anderen Nickname.`;
-    return;
-  }
   duellSpielen(d, name);
 }
+
+// Für nickFeld(): Name im Duell schon von jemand anderem belegt?
+const nickVergeben = d => name => {
+  duellNeuLesen();
+  const belegt = duellEintrag(d.i)?.ergebnisse.some(e => !e.eigen && nickSchluessel(e.n) === nickSchluessel(name));
+  return belegt ? `«${name}» spielt in diesem Duell schon mit. Wähle einen anderen Nickname.` : '';
+};
 
 function erstellenBlock(nick) {
   const auswahl = (id, label) => {
@@ -530,7 +572,7 @@ function erstellenBlock(nick) {
   };
   // Die Karte umschalten wie auf der Startseite: dann gilt auch ihr Filter.
   selSet.addEventListener('change', () => {
-    if (!Object.hasOwn(SETS, selSet.value) || SETS[selSet.value] === SET) return;
+    if (!hatEigen(SETS, selSet.value) || SETS[selSet.value] === SET) return;
     duellVorherSet = null;            // bewusst gewählt: bleibt auch auf der Startseite
     setAktivieren(SETS[selSet.value]);
     try { localStorage.setItem(SPEICHER_SET, SET.id); } catch { /* nur für diese Sitzung */ }
@@ -575,13 +617,10 @@ function linkEinfuegenBlock() {
   lab.append(input);
   const meldung = el('p', { class: 'stoff-meldung', 'aria-live': 'polite' });
   const oeffnen = () => {
-    const text = input.value.trim();
-    const i = text.indexOf('#');
-    if (i < 0 || !/^#(duell|ergebnis)=/.test(text.slice(i))) {
-      meldung.textContent = 'Das ist kein Duell- oder Ergebnis-Link.';
-      return;
-    }
-    duellLinkOeffnen(text.slice(i));
+    // Auch die ganze WhatsApp-Nachricht darf drinstehen.
+    const m = /#(duell|ergebnis)=[A-Za-z0-9_-]+/.exec(input.value);
+    if (!m) { meldung.textContent = 'Das ist kein Duell- oder Ergebnis-Link.'; return; }
+    duellLinkOeffnen(m[0]);
   };
   input.addEventListener('keydown', e => { if (e.key === 'Enter') oeffnen(); });
   return duellBlock('duell-einfuegen-block',
@@ -618,6 +657,7 @@ function verlaufBlock() {
     oeffnen.addEventListener('click', () => duellRanglisteZeigen(e));
     const weg = duellKnopf('Löschen', 'knopf-schlicht duell-loeschen', () => {
       if (!confirm(`Das Duell «${duellBeschreibung(e.d)}» aus dem Verlauf löschen?`)) return;
+      duellNeuLesen();
       delete DUELL.duelle[e.d.i];
       duellSpeichern();
       duellUebersicht();
@@ -640,7 +680,7 @@ function duellRanglisteZeigen(eintrag) {
   const teile = [];
   const kopf = el('div', { class: 'duell-kopf' });
   kopf.append(
-    el('h1', {}, eigen ? 'Duell' : `${d.n} fordert dich heraus`),
+    el('h1', {}, eigen || ichGespielt ? 'Duell' : `${d.n} fordert dich heraus`),
     el('p', { class: 'lauftext' }, `${duellBeschreibung(d)} · ${d.k.length} Fragen · erstellt von ${d.n}`),
   );
   teile.push(kopf);
@@ -650,7 +690,7 @@ function duellRanglisteZeigen(eintrag) {
   if (stoff.fehler) {
     teile.push(duellBlock('duell-fehler', el('p', { class: 'lauftext', id: 'duell-meldung', role: 'alert' }, stoff.fehler)));
   } else {
-    const nick = nickFeld();
+    const nick = nickFeld(nickVergeben(d), !ichGespielt);
     if (ichGespielt) nick.input.value = '';
     const start = [nick.wrap, duellKnopf('Duell starten', 'knopf', () => duellStartPruefen(d, nick), 'duell-start')];
     if (ichGespielt) {
@@ -703,7 +743,7 @@ function duellLinkOeffnen(hash) {
   const gelesen = duellLesen(hash);
   if (!gelesen) return;
   // Ein laufendes Spiel nicht ohne Rückfrage abbrechen.
-  if (lauf && !confirm('Ein Spiel läuft gerade. Abbrechen und den Duell-Link öffnen?')) return;
+  if (lauf && !$('#quiz').hidden && !confirm('Ein Spiel läuft gerade. Abbrechen und den Duell-Link öffnen?')) return;
   if (gelesen.fehler) return duellMeldung(gelesen.fehler);
   const bekannt = duellEintrag(gelesen.duell.i);
   // Gleiche ID, andere Fragen: gefälscht oder kaputt.
@@ -726,4 +766,6 @@ const DUELL = duellSpeicherLaden();
 
 $('#duell-oeffnen').addEventListener('click', () => duellUebersicht());
 window.addEventListener('hashchange', duellHashVerarbeiten);
+// Anderer Tab hat gespeichert: Stand übernehmen (laufendes Spiel bleibt).
+window.addEventListener('storage', e => { if (e.key === DUELL_SPEICHER || e.key === null) duellNeuLesen(); });
 duellHashVerarbeiten();

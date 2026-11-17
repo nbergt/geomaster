@@ -211,17 +211,38 @@ try {
   await klicke('#duell-oeffnen');
   await klicke('#duell-verlauf .duell-verlauf-eintrag');
   pruefe('Abbruch: Duell nicht nochmal startbar', await da('#duell-rangliste') && !(await da('#duell-start')));
-  pruefe('Abbruch: zählt 0 richtig, volle Zeit', (await text('#duell-rangliste'))?.includes('0/10'), await text('#duell-rangliste'));
+  pruefe('Abbruch: zählt 0 richtig, volle Zeit (10 × 20 s)', (await text('#duell-rangliste'))?.includes('0/10') &&
+    (await text('#duell-rangliste'))?.includes('200,0 s'), await text('#duell-rangliste'));
 
   // ── Gleicher Nickname wie ein fremdes Ergebnis ───────────────────────
   await geraet(hashVon(annaErgebnis));
   await setze('#duell-nick', 'anna');
   await klicke('#duell-start');
   pruefe('Vergebener Nickname: kein Start', !(await da('#quiz')));
-  pruefe('Vergebener Nickname: Hinweis', (await text('#duell-ich'))?.includes('schon mit') ||
-    (await text('.duell-ich'))?.includes('schon mit'), await text('.duell-ich'));
+  pruefe('Vergebener Nickname: Hinweis', (await text('.duell-ich'))?.includes('schon mit'), await text('.duell-ich'));
+  pruefe('Vergebener Nickname wird nicht gespeichert',
+    JSON.parse((await speicher())['geomaster.duell.v1'] || '{}').nick !== 'anna');
+
+  // Veralteter zweiter Tab: anderswo schon als «Hugo» gespielt, diese Seite weiss es noch nicht.
+  await b.js(`(() => { const s = JSON.parse(localStorage.getItem('geomaster.duell.v1'));
+    const id = Object.keys(s.duelle)[0];
+    s.gespielt.push(id + '|hugo'); s.duelle[id].ergebnisse.push({ n: 'Hugo', r: 7, z: 50, eigen: true });
+    localStorage.setItem('geomaster.duell.v1', JSON.stringify(s)); })()`);
+  await setze('#duell-nick', 'Hugo');
+  await klicke('#duell-start');
+  pruefe('Zweiter Tab: schon gespielt, kein neuer Start', !(await da('#quiz')));
+  pruefe('Zweiter Tab: Ergebnis aus dem anderen Tab bleibt', (await text('#duell-rangliste'))?.includes('7/10'),
+    await text('#duell-rangliste'));
+
+  // Ganze WhatsApp-Nachricht in «Link bekommen?» einfügen.
+  await klicke('#nach-hause');
+  await klicke('#duell-oeffnen');
+  await setze('#duell-link-einfuegen', '#1 Max fordert dich heraus: ' + annaErgebnis + ' Viel Glück!');
+  await klicke('#duell-link-oeffnen');
+  pruefe('Link aus eingefügter Nachricht geöffnet', await da('#duell-rangliste'));
 
   // ── Antwort nach Ablauf (Handy ruckelt): zählt als abgelaufen ─────────
+  await oeffne(hashVon(annaErgebnis));
   await setze('#duell-nick', 'Gina');
   await klicke('#duell-start');
   const spaet = await b.js(`(() => { const t = performance.now(); while (performance.now() - t < 10300) {}

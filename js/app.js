@@ -729,6 +729,7 @@ function auswahlZeigen(item) {
     const b = el('button', { class: 'wahl', type: 'button' }, kand.name);
     b.addEventListener('click', () => {
       if (!lauf.offen) return;
+      if (lauf.duell && duellZuSpaet()) return duellZeitAbgelaufen();   // js/duell.js
       for (const other of feld.querySelectorAll('.wahl')) {
         other.disabled = true;
         if (other.textContent === item.name) other.classList.add('richtig');
@@ -748,6 +749,7 @@ function tippfeldZeigen() {
   const knopf = el('button', { class: 'knopf', type: 'button' }, 'Prüfen');
   const pruefen = () => {
     if (!lauf.offen) return;
+    if (lauf.duell && duellZuSpaet()) return duellZeitAbgelaufen();   // js/duell.js
     const item = lauf.fragen[lauf.idx];
     const richtig = textPasst(input.value, item, lauf.thema);
     input.disabled = true; knopf.disabled = true;
@@ -770,6 +772,7 @@ window.visualViewport?.addEventListener('resize', () => {
 // Ein Tipp auf die Karte (siehe Gesten oben) beantwortet die Kartenaufgabe.
 function kartenTipp(ev) {
   if (!lauf || !lauf.offen) return;
+  if (lauf.duell && duellZuSpaet()) return duellZeitAbgelaufen();     // js/duell.js
   const { thema, stufe } = lauf;
   const kartenAufgabe = (thema.modus === 'karte' && stufe <= 3) || (thema.modus === 'nennen' && stufe === 4);
   if (!kartenAufgabe) return;
