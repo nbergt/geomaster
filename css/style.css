@@ -1155,3 +1155,117 @@ dialog { border-radius: 14px; border-color: var(--kontur-zart); box-shadow: 0 24
   .filter-wahl #filter-bearbeiten { order: 1; margin-left: auto; }
   .thema { padding-left: 16px; }
 }
+
+/* ── Duell (js/duell.js) ─────────────────────────────────────────────── */
+
+.duell-zeile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  width: min(860px, 100%);
+  margin-inline: auto;
+}
+.duell-zeile-text { color: var(--tinte-matt); font-size: 15px; }
+
+.duell-inhalt {
+  display: grid;
+  gap: 16px;
+  width: min(760px, 100%);
+  margin-inline: auto;
+}
+.duell-kopf h1 { margin-bottom: 4px; }
+.duell-block {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--papier);
+  border: 1px solid var(--kontur-zart);
+  border-radius: var(--ecke, 2px);
+}
+.duell-block h2 { margin: 0; }
+.duell-block > .knopf, .duell-block > .knopf-schlicht { justify-self: start; }
+
+.duell-nick, .duell-feld { display: grid; gap: 4px; font-family: var(--schrift-karte); color: var(--tinte-matt); }
+.duell-nick input, .duell-feld select, .duell-teilen input {
+  min-height: 44px;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid var(--kontur);
+  border-radius: 2px;
+  font: inherit;
+  color: var(--tinte);
+  width: 100%;
+  box-sizing: border-box;
+}
+.duell-hinweis { margin: 0; font-size: 14px; color: var(--tinte-matt); font-family: var(--schrift-text); }
+
+.duell-teilen { display: grid; gap: 8px; }
+.duell-teilen input { font-size: 14px; color: var(--tinte-matt); }
+.duell-knoepfe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.duell-whatsapp { text-decoration: none; display: inline-flex; align-items: center; }
+.duell-kopiert { color: var(--wald); font-size: 14px; }
+
+.duell-rangliste, .duell-verlauf { list-style: none; margin: 0; padding: 0; }
+.duell-rangliste li {
+  display: grid;
+  grid-template-columns: 2.4em 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--papier-tief);
+  font-variant-numeric: tabular-nums;
+}
+.duell-rangliste li:last-child { border-bottom: 0; }
+.duell-rangliste li.eigen { background: var(--papier-tief); }
+.duell-rang { text-align: center; font-family: var(--schrift-karte); }
+.duell-name { font-family: var(--schrift-karte); font-weight: var(--fett); overflow-wrap: anywhere; }
+.duell-zeit { color: var(--tinte-matt); }
+
+.duell-verlauf li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--papier-tief);
+}
+.duell-verlauf li:last-child { border-bottom: 0; }
+.duell-verlauf-eintrag {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  padding: 8px 4px;
+  min-height: 44px;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.duell-verlauf-eintrag:hover .duell-verlauf-titel { text-decoration: underline; }
+.duell-verlauf-titel { font-family: var(--schrift-karte); font-weight: var(--fett); }
+.duell-verlauf-info { font-size: 14px; color: var(--tinte-matt); }
+
+/* Countdown in der Frageleiste: Zahl und schrumpfender Balken. */
+.duell-uhr {
+  --rest: 1;
+  flex: none;
+  min-width: 3.6em;
+  padding: 6px 10px 10px;
+  font-size: 20px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--wald) calc(var(--rest) * 100%), transparent 0) bottom / 100% 6px no-repeat, var(--papier);
+  font-family: var(--schrift-karte);
+  font-weight: var(--fett);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.duell-uhr.knapp {
+  color: var(--signal);
+  background: linear-gradient(to right, var(--signal) calc(var(--rest) * 100%), transparent 0) bottom / 100% 6px no-repeat, var(--papier);
+}
+.duell-uhr.vorbei { color: var(--tinte-matt); background: var(--papier); }
+
+.duell-anderer summary { cursor: pointer; font-family: var(--schrift-karte); color: var(--tinte-matt); min-height: 32px; }
+.duell-anderer[open] { display: grid; gap: 10px; }
+.duell-anderer > .knopf { justify-self: start; }
+.duell-inhalt > .knopf-schlicht { justify-self: start; }
+.duell-kopf h1:focus { outline: none; }

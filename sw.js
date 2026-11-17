@@ -9,7 +9,7 @@
 
 // Ein Speicher pro Ort: die Hauptseite und jede PR-Vorschau (Unterordner
 // pr-N/, siehe .github/workflows/pages.yml) haben ihren eigenen.
-const VERSION = 'geomaster-v1';
+const VERSION = 'geomaster-v2';
 const SPEICHER = `${VERSION} ${self.registration.scope}`;
 const DATEIEN = [
   './',
@@ -26,6 +26,7 @@ const DATEIEN = [
   'js/klimadiagramm.js',
   'js/sets.js',
   'js/app.js',
+  'js/duell.js',
   'js/pwa.js',
   'icons/icon.svg',
   'icons/apple-touch-icon.png',
