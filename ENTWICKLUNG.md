@@ -64,7 +64,7 @@ den Branch `gh-pages` (Settings → Pages → Source: «Deploy from a branch»,
 Branch `gh-pages`, Ordner `/ (root)`):
 
 - **Push auf `main`** (oder von Hand unter *Actions → Pages → Run workflow*):
-  `check.mjs --ch --eu`, `gesten.mjs`, `europa.mjs`; nur wenn alles besteht,
+  `check.mjs --ch --eu`, `gesten.mjs`, `europa.mjs`, `duell.mjs`; nur wenn alles besteht,
   kommen die App-Dateien in die Wurzel von `gh-pages`.
 - **Pull Request** aus diesem Repository: dieselben Prüfungen plus
   CH-Browser-Vergleich gegen `main`, dann eine **Testversion** unter

@@ -15,6 +15,36 @@ Schwierigkeitsstufen. Zwei Karten, auf der Startseite umschaltbar:
   Autokennzeichen, Flüsse, Gebirge, Gipfel, Meere und Meerengen, Inseln und
   Halbinseln, Klimazonen und Klimadiagramme.
 
+## Duell
+
+Auf der Startseite **Duell** antippen, einen Nickname wählen (nur einen
+Spitznamen), dann Karte, Thema und Stufe wählen und **Duell erstellen**. Den
+Link per WhatsApp (oder über «Link kopieren») an die Gegner schicken. Alle
+spielen dieselben 10 Fragen mit denselben Antwortmöglichkeiten, je 10 Sekunden,
+beim Eintippen 20 Sekunden. Läuft die Zeit ab, zählt die Frage als falsch.
+
+Nach dem Spiel **Ergebnis teilen**: Wer den Ergebnis-Link öffnet, sieht das
+Ergebnis in seiner Rangliste. Es gewinnt, wer mehr richtig hat, bei
+Gleichstand die kürzere Gesamtzeit. Beliebig viele Spieler sind möglich, zum
+Beispiel eine ganze WhatsApp-Gruppe. Unter **Duell** stehen auch der Verlauf
+und die Ranglisten aller Duelle auf diesem Gerät.
+
+Jedes Duell lässt sich pro Gerät und Nickname nur einmal spielen; wer
+abbricht, hat 0 richtig mit voller Zeit. Geschwister auf demselben Gerät
+spielen unter einem anderen Nickname mit. In der installierten App (vor allem
+auf dem iPhone öffnen Links Safari statt der App) lässt sich ein Link unter
+**Duell → Link bekommen?** einfügen. Safari und die installierte App haben
+auf dem iPhone getrennte Speicher; «einmal pro Gerät» gilt dort je für sich.
+
+So funktioniert es ohne eigenen Server: Duell und Ergebnis stecken vollständig
+im Link (hinter dem `#`, das beim Öffnen nicht an GitHub Pages geht). Beim
+Teilen über WhatsApp sieht WhatsApp den Link aber, also Nicknames, Punkte und
+Zeit, deshalb nur Spitznamen verwenden. Rangliste und Verlauf liegen nur im
+Browser unter `geomaster.duell.v1`. Wer online ist, lässt sich so nicht
+anzeigen, und gefälschte Ergebnis-Links sind möglich. Duelle zählen nicht zum
+Lernfortschritt und verwenden immer den eingebauten Stoff (ein eigener Filter
+bestimmt nur, aus welchen Einträgen der Ersteller die 10 Fragen zieht).
+
 ## Lernstoff auswählen (Filter, nur Europa)
 
 Auf der Startseite unter **Lernstoff** wählen, was abgefragt wird: *Alle
@@ -158,6 +188,7 @@ node tools/check.mjs --ch          # Schweiz unverändert? (gegen tools/baseline
 node tools/check.mjs --eu          # Europa: Geometrie, Stoff, Flaggen, Themen
 node tools/browser/gesten.mjs      # Zoom, Gesten, Layout Handy/Tablet (braucht Chrome)
 node tools/browser/europa.mjs      # Europa im Browser (Testfälle T2, T4, T6–T12)
+node tools/browser/duell.mjs       # Duell-Modus im Browser (Issue #9, dauert rund 30 s)
 node tools/browser/vergleich.mjs <alter Ordner> <neuer Ordner> tools/browser/szenario-quiz.mjs
 ```
 
@@ -210,6 +241,7 @@ js/klima-eu.js        Klimazonen und Klimadiagramm-Werte (autogeneriert)
 js/klimadiagramm.js   Zeichnet ein Klimadiagramm (Walter/Lieth) als SVG
 js/sets.js            Die beiden Karten: Themen, Texte, Toleranzen, Speicher, Filter
 js/app.js             Spiellogik
+js/duell.js           Duell-Modus: Links, Countdown, Rangliste, Verlauf
 js/pwa.js             Installierbar machen (Manifest, Service Worker, Knopf), nur über http(s)
 manifest.webmanifest  App-Manifest (Name, Farben, Icons)
 sw.js                 Service Worker: offline nutzbar; DATEIEN muss jede App-Datei enthalten

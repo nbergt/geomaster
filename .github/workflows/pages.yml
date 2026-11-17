@@ -59,10 +59,11 @@ jobs:
           chmod +x "$RUNNER_TEMP/chrome.sh"
           echo "CHROME=$RUNNER_TEMP/chrome.sh" >> "$GITHUB_ENV"
 
-      - name: Browser-Prüfungen (Gesten, Europa)
+      - name: Browser-Prüfungen (Gesten, Europa, Duell)
         run: |
           node tools/browser/gesten.mjs
           node tools/browser/europa.mjs
+          node tools/browser/duell.mjs
 
       # Schweiz muss im Browser «identisch» zum Stand von main bleiben.
       - name: Basis-Checkout (main) für den CH-Vergleich
