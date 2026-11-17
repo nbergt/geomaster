@@ -213,6 +213,13 @@ try {
   pruefe('Abbruch: Duell nicht nochmal startbar', await da('#duell-rangliste') && !(await da('#duell-start')));
   pruefe('Abbruch: zählt 0 richtig, volle Zeit (10 × 20 s)', (await text('#duell-rangliste'))?.includes('0/10') &&
     (await text('#duell-rangliste'))?.includes('200,0 s'), await text('#duell-rangliste'));
+  // Auch nach Löschen im Verlauf nicht nochmal spielbar.
+  const cleoLink = await wert('#duell-link');
+  await klicke('#nach-hause');
+  await klicke('#duell-oeffnen');
+  await klicke('#duell-verlauf .duell-loeschen');
+  await oeffne(hashVon(cleoLink));
+  pruefe('Abbruch + Löschen: nicht nochmal startbar', !(await da('#duell-start')));
 
   // ── Gleicher Nickname wie ein fremdes Ergebnis ───────────────────────
   await geraet(hashVon(annaErgebnis));
@@ -250,6 +257,31 @@ try {
     return document.querySelector('#rueck-text').textContent; })()`);
   pruefe('Antwort nach Ablauf zählt als falsch', spaet.startsWith('✗') && spaet.includes('Zeit abgelaufen'), spaet);
   await b.js(`document.querySelector('#nach-hause').click()`);
+
+  // Geschwister auf demselben Gerät: unter anderem Nickname mitspielen.
+  await oeffne(hashVon(annaErgebnis));
+  const nickVorher = JSON.parse((await speicher())['geomaster.duell.v1']).nick;
+  await b.js(`document.querySelector('.duell-anderer summary').click()`);
+  await setze('#duell-nick', 'Ida');
+  await klicke('#duell-start');
+  const idaZuege = await spielen(() => 'erste');
+  const idaLink = await wert('#duell-ergebnis-link');
+  pruefe('Geschwister: 10 Fragen gespielt', idaZuege.length === 10, String(idaZuege.length));
+  pruefe('Geschwister: Ergebnis-Link trägt den eigenen Nickname',
+    await b.js(`duellLesen(${q(hashVon(String(idaLink)))})?.ergebnis?.n === 'Ida'`));
+  { const nick = JSON.parse((await speicher())['geomaster.duell.v1']).nick;
+    pruefe('Geschwister: Geräte-Nickname bleibt', nick === nickVorher && nick !== 'Ida', `${nickVorher} → ${nick}`); }
+
+  // Lange Emoji-Kette und gestapelte Zeichen im Nickname: bleibt kurz.
+  const kette = await b.js(`(() => { const e = duellLesen(${q(hashVon(annaErgebnis))}).ergebnis;
+    const zwj = String.fromCharCode(0x200d), mann = String.fromCodePoint(0x1f468);
+    const stapel = 'Ben' + (String.fromCharCode(0x301, 0x302) + zwj).repeat(400);
+    return [duellLinkBauen('ergebnis', { ...e, n: mann + (zwj + mann).repeat(300) }),
+            duellLinkBauen('ergebnis', { ...e, n: stapel })]; })()`);
+  for (const l of kette) await oeffne(hashVon(l));
+  const laengen = await b.js(`[...document.querySelectorAll('#duell-rangliste .duell-name')].map(n => Array.from(n.textContent).length)`);
+  pruefe('Lange Nicknames aus Links werden gekürzt (Codepunkte)', laengen.every(n => n <= 64), JSON.stringify(laengen));
+  pruefe('Keine waagrechte Scrollleiste', await b.js(`document.querySelector('#duell').scrollWidth <= document.querySelector('#duell').clientWidth`));
   pruefe('Keine Laufzeitfehler', b.fehler.length === 0, b.fehler.join(' | '));
   const fremd = b.netz.filter(u => !u.startsWith('file:') && !u.startsWith('data:') && u !== 'about:blank');
   pruefe('Nur file:// und data: geladen', fremd.length === 0, fremd.join(', '));
