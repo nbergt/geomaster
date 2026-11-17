@@ -54,8 +54,12 @@ function duellSpeichern() {
   for (const id of ids.slice(DUELL_MAX_GESPEICHERT)) delete DUELL.duelle[id];
   DUELL.gespielt = DUELL.gespielt.slice(-DUELL_MAX_GESPIELT);
   try { localStorage.setItem(DUELL_SPEICHER, JSON.stringify(DUELL)); }
-  catch { /* Speicher voll oder gesperrt: gilt nur für diese Sitzung */ }
+  catch { duellNurSitzung = true; /* Speicher voll oder gesperrt: gilt nur für diese Sitzung */ }
 }
+
+// Lässt sich nicht speichern, ist der Stand im Speicher veraltet: dann nicht
+// mehr neu lesen, sonst ginge der Stand dieser Sitzung verloren.
+let duellNurSitzung = false;
 
 // Ohne Object.hasOwn und .at(): läuft auch auf älteren iPads (Safari < 15.4).
 const hatEigen = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -64,6 +68,7 @@ const duellEintrag = id => (hatEigen(DUELL.duelle, id) ? DUELL.duelle[id] : null
 // Ein zweiter Tab kann inzwischen gespeichert haben: vor jeder Änderung den
 // Stand neu lesen, damit nichts überschrieben oder doppelt gespielt wird.
 function duellNeuLesen() {
+  if (duellNurSitzung) return;
   const frisch = duellSpeicherLaden();
   DUELL.nick = frisch.nick;
   DUELL.duelle = frisch.duelle;
@@ -86,11 +91,25 @@ function nickBereinigen(s, kuerzen = true) {
     .replace(/[\p{Cc}\p{Cs}\p{Co}\p{Cn}\p{Zl}\p{Zp}]/gu, '')
     .replace(/\p{Cf}/gu, c => (c === ZWJ ? c : ''))
     .replace(/./gu, c => (NICK_FUELLER.has(c) ? '' : c))
+    .replace(/[^]+/u, zwjNurInEmojis)
     .replace(/\s+/gu, ' ').trim()
     .replace(/^\p{M}+/u, '')
     .replace(/(\p{M}{2})\p{M}+/gu, '$1');          // höchstens zwei Zeichen übereinander
   if (!/[\p{L}\p{N}\p{Extended_Pictographic}]/u.test(sauber)) return '';
-  return kuerzen ? zeichenListe(sauber).slice(0, NICK_MAX).join('').trim() : sauber;
+  if (!kuerzen) return sauber;
+  // Höchstens NICK_MAX sichtbare Zeichen und insgesamt höchstens 4 × NICK_MAX
+  // Codepunkte: auch lange Emoji-Ketten bleiben kurz.
+  const gekuerzt = zeichenListe(sauber).slice(0, NICK_MAX).join('');
+  return Array.from(gekuerzt).slice(0, NICK_MAX * 4).join('').replace(/\u200d$/u, '').trim();
+}
+
+// ZWJ nur zwischen Emoji-Teilen (👨‍👩‍👧): davor ein Emoji (auch mit Hautton oder
+// Variantenzeichen), danach ein Emoji. Sonst stapelt er beliebig Zeichen.
+function zwjNurInEmojis(s) {
+  const z = Array.from(s);
+  return z.filter((c, i) => c !== ZWJ ||
+    (/[\p{Extended_Pictographic}\p{Emoji_Modifier}\p{M}]/u.test(z[i - 1] ?? '') &&
+     /\p{Extended_Pictographic}/u.test(z[i + 1] ?? ''))).join('');
 }
 
 // Sichtbare Zeichen (Grapheme): ein Familien-Emoji zählt als eins und wird
@@ -232,8 +251,10 @@ function duellZufallsId() {
 // Legt ein Duell an, falls unbekannt. Fremde Ergebnisse: eins pro Nickname,
 // das erste bleibt. Das eigene Ergebnis ersetzt immer den Eintrag mit
 // gleichem Nickname (es wurde auf diesem Gerät gespielt).
-function duellMerken(d, ergebnis, eigen) {
+// marke: «schon gespielt» für Nickname setzen (nach dem Neulesen, sonst ginge sie verloren).
+function duellMerken(d, ergebnis, eigen, marke) {
   duellNeuLesen();
+  if (marke && !DUELL.gespielt.includes(marke)) DUELL.gespielt.push(marke);
   let eintrag = duellEintrag(d.i);
   if (!eintrag) eintrag = DUELL.duelle[d.i] = { d, ergebnisse: [], zuletzt: Date.now() };
   eintrag.zuletzt = Date.now();
@@ -267,10 +288,11 @@ function duellRangliste(eintrag) {
   });
 }
 
-// Das eigene Ergebnis: zum aktuellen Nickname, sonst das letzte auf diesem Gerät.
-function eigenesErgebnis(eintrag) {
+// Das eigene Ergebnis: zum gerade gespielten bzw. aktuellen Nickname, sonst
+// das letzte auf diesem Gerät.
+function eigenesErgebnis(eintrag, nick = DUELL.nick) {
   const eigene = eintrag.ergebnisse.filter(e => e.eigen);
-  return eigene.find(e => DUELL.nick && nickSchluessel(e.n) === nickSchluessel(DUELL.nick)) ?? eigene[eigene.length - 1];
+  return eigene.find(e => nick && nickSchluessel(e.n) === nickSchluessel(nick)) ?? eigene[eigene.length - 1];
 }
 
 const duellZeitText = z => `${(z / 10).toFixed(1).replace('.', ',')} s`;
@@ -290,9 +312,7 @@ function duellSpielen(d, nick) {
   if (stoff.fehler) return duellMeldung(stoff.fehler);
   // Schon beim Start als gespielt merken, mit 0 richtig und voller Zeit:
   // Wer abbricht, kann nicht mit bekannten Fragen nochmal anfangen.
-  duellNeuLesen();
-  DUELL.gespielt.push(gespieltMarke(d, nick));
-  duellMerken(d, { n: nick, r: 0, z: d.k.length * duellSekunden(d) * 10 }, true);
+  duellMerken(d, { n: nick, r: 0, z: d.k.length * duellSekunden(d) * 10 }, true, gespieltMarke(d, nick));
   if (SET.id !== d.s) {
     if (!duellVorherSet) duellVorherSet = SET;
     setAktivieren(SETS[d.s]);
@@ -382,7 +402,7 @@ function duellFertig() {
   const eintrag = duellMerken(d, { n: nick, r, z }, true);
   lauf = null;
   duellVerlassen();
-  duellRanglisteZeigen(eintrag);
+  duellRanglisteZeigen(eintrag, nick);
 }
 
 // Aufgerufen von homeZeigen() (app.js) und nach einem Duell: Uhr weg,
@@ -445,7 +465,7 @@ function nickFeld(pruefen, merken = true) {
   const speichern = () => {
     const voll = nickBereinigen(input.value, false);
     if (!voll) return fehler('Bitte einen Nickname mit mindestens einem Buchstaben eingeben.');
-    if (Array.from(voll).length > NICK_MAX) return fehler(`Höchstens ${NICK_MAX} Zeichen, bitte kürzer.`);
+    if (zeichenListe(voll).length > NICK_MAX) return fehler(`Höchstens ${NICK_MAX} Zeichen, bitte kürzer.`);
     const problem = pruefen?.(voll);
     if (problem) return fehler(problem);
     input.value = voll;
@@ -672,10 +692,11 @@ function verlaufBlock() {
 
 /* ── Einladung und Rangliste ──────────────────────────────────────────── */
 
-function duellRanglisteZeigen(eintrag) {
+// gespieltAls: Nickname der eben gespielten Runde (Geschwister mit anderem Namen).
+function duellRanglisteZeigen(eintrag, gespieltAls) {
   const d = eintrag.d;
   const stoff = duellStoff(d);
-  const eigen = eigenesErgebnis(eintrag);
+  const eigen = eigenesErgebnis(eintrag, gespieltAls ?? DUELL.nick);
   const ichGespielt = duellGespielt(d, DUELL.nick);
   const teile = [];
   const kopf = el('div', { class: 'duell-kopf' });
