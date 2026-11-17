@@ -26,6 +26,7 @@ const DATEIEN = [
   'js/klimadiagramm.js',
   'js/sets.js',
   'js/app.js',
+  'js/duell.js',
   'js/pwa.js',
   'icons/icon.svg',
   'icons/apple-touch-icon.png',
