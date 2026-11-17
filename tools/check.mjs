@@ -61,6 +61,9 @@ function appLaden() {
   const ctx = vm.createContext({
     console, document: dom, localStorage: speicherAttrappe(),
     confirm: () => false, DOMPoint: dom, navigator: dom,
+    // js/duell.js liest beim Laden das # der Adresse und hört auf hashchange.
+    location: { hash: '', protocol: 'file:', pathname: '', search: '' }, history: dom,
+    addEventListener: () => {},
   });
   ctx.window = ctx;
   for (const s of scripts) {

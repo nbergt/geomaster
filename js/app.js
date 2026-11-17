@@ -619,7 +619,8 @@ function textPasst(eingabe, item, thema) {
 
 /* ══ Runde ═══════════════════════════════════════════════════════════════ */
 
-const mischen = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(p => p[1]);
+// Der Zufall lässt sich vorgeben (Duell: gleiche Antworten auf jedem Gerät).
+const mischen = (a, zufall = Math.random) => a.map(v => [zufall(), v]).sort((x, y) => x[0] - y[0]).map(p => p[1]);
 
 let lauf = null;
 
@@ -645,6 +646,7 @@ function frageZeigen() {
   const { thema, stufe, fragen, idx } = lauf;
   const item = fragen[idx];
   lauf.offen = true;
+  if (lauf.duell) lauf.zufall = duellZufall(lauf.duell.z, idx);   // js/duell.js
 
   $('#rueckmeldung').hidden = true;
   aufloesung.replaceChildren();
@@ -683,6 +685,9 @@ function frageZeigen() {
   const antwortfeld = $('#antwortfeld');
   antwortfeld.replaceChildren();
 
+  // Duell: Countdown, bei Tippaufgaben länger (js/duell.js).
+  if (lauf.duell) duellUhrStarten(!kartenAufgabe && !(thema.modus === 'nennen' && stufe <= 2));
+
   if (kartenAufgabe) return;                 // Antwort kommt über den Kartenklick
   if (thema.modus === 'nennen' && stufe <= 2) auswahlZeigen(item);
   else tippfeldZeigen();
@@ -717,10 +722,10 @@ function auswahlZeigen(item) {
   const feld = $('#antwortfeld');
   // Jeder Name nur einmal (Klimadiagramme: mehrere Orte derselben Zone).
   const andere = [];
-  for (const i of mischen(lauf.thema.items.filter(i => i.key !== item.key && i.name !== item.name))) {
+  for (const i of mischen(lauf.thema.items.filter(i => i.key !== item.key && i.name !== item.name), lauf.zufall)) {
     if (andere.length < 3 && !andere.some(a => a.name === i.name)) andere.push(i);
   }
-  for (const kand of mischen([item, ...andere])) {
+  for (const kand of mischen([item, ...andere], lauf.zufall)) {
     const b = el('button', { class: 'wahl', type: 'button' }, kand.name);
     b.addEventListener('click', () => {
       if (!lauf.offen) return;
@@ -811,7 +816,8 @@ function aufloesungZeichnen(pt, item, richtig) {
 
 function antwortVerbuchen(richtig, text, item, notiz) {
   lauf.offen = false;
-  fortschrittMerken(lauf.thema, item, lauf.stufe, richtig);
+  if (lauf.duell) duellAntwort();            // Duelle zählen nicht zum Lernfortschritt
+  else fortschrittMerken(lauf.thema, item, lauf.stufe, richtig);
   lauf.protokoll.push({ item, richtig, notiz });
 
   const rueck = $('#rueckmeldung');
@@ -822,7 +828,8 @@ function antwortVerbuchen(richtig, text, item, notiz) {
     rt.append(el('span', { class: 'notiz' }, ` (${item.hinweis})`));
   }
   rueck.hidden = false;
-  $('#weiter').textContent = lauf.idx + 1 < lauf.fragen.length ? 'Weiter' : 'Runde abschliessen';
+  $('#weiter').textContent = lauf.idx + 1 < lauf.fragen.length ? 'Weiter'
+    : lauf.duell ? 'Duell abschliessen' : 'Runde abschliessen';
   $('#weiter').focus();
 }
 
@@ -830,6 +837,7 @@ $('#weiter').addEventListener('click', () => {
   if (!lauf) return;
   lauf.idx++;
   if (lauf.idx < lauf.fragen.length) frageZeigen();
+  else if (lauf.duell) duellFertig();
   else ergebnisZeigen();
 });
 
@@ -903,6 +911,7 @@ function setWahlZeigen() {
 }
 
 function homeZeigen() {
+  if (typeof duellVerlassen === 'function') duellVerlassen();   // js/duell.js, lädt nach app.js
   lauf = null;
   schirmZeigen('home');
   railSetzen('', '');

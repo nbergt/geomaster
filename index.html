@@ -48,6 +48,11 @@
     <button class="knopf-schlicht" id="filter-bearbeiten" type="button">Anpassen</button>
   </div>
 
+  <div class="duell-zeile">
+    <button class="knopf knopf-zweit" id="duell-oeffnen" type="button">Duell</button>
+    <span class="duell-zeile-text">Fordere andere heraus: gleiche 10 Fragen, Link per WhatsApp.</span>
+  </div>
+
   <ol class="themenliste" id="themenliste"></ol>
 
   <div class="home-fuss">
@@ -71,6 +76,7 @@
     <div class="frageleiste">
       <p class="frage" id="frage">—</p>
       <div class="frage-beigabe" id="frage-beigabe"></div>
+      <div class="duell-uhr" id="duell-uhr" role="timer" aria-live="off" hidden></div>
     </div>
 
     <div class="kartenfeld" id="kartenfeld">
@@ -104,6 +110,11 @@
     <button class="knopf knopf-zweit" id="stufe-hoch" type="button" hidden>Nächste Stufe</button>
     <button class="knopf-schlicht" id="zurueck" type="button">Zur Übersicht</button>
   </div>
+</main>
+
+<!-- ── Duell (Inhalt baut js/duell.js) ────────────────────────────────── -->
+<main id="duell" class="schirm" hidden>
+  <div class="duell-inhalt" id="duell-inhalt"></div>
 </main>
 
 <!-- ── Stoff bearbeiten ────────────────────────────────────────────────── -->
@@ -161,6 +172,7 @@
 <script src="js/klimadiagramm.js"></script>
 <script src="js/sets.js"></script>
 <script src="js/app.js"></script>
+<script src="js/duell.js"></script>
 <script src="js/pwa.js"></script>
 </body>
 </html>
